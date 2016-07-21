@@ -11,7 +11,7 @@ import (
 	"path"
 	"strings"
 
-	"github.com/NSAlbuquerque/go-down-themes/models"
+	"github.com/nsalb/go-down-theme/models"
 )
 
 var (
