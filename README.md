@@ -6,7 +6,7 @@ Baixa temas registrados na galeria do projeto [Sublime Theme Editor](https://git
 ## Getting & Install
 
 ```bash
-go get github.com/nsalb/go-down-theme
+go get github.com/natalbu/go-down-theme
 ```
 
 ## Usage
