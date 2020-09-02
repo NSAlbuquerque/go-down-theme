@@ -7,12 +7,15 @@ import (
 
 // Theme metainformações sobre temas
 type Theme struct {
-	Name        string    `json:"name"`
-	URL         string    `json:"url"`
-	Light       bool      `json:"light"`
-	ProjectRepo string    `json:"projectRepo"`
-	Version     string    `json:"version,omitempty"`
-	UpdatedAt   time.Time `json:"updatedAt,omitempty"`
+	Name        string `json:"name"`
+	URL         string `json:"url"`
+	Light       bool   `json:"light"`
+	ProjectRepo string `json:"projectRepo"`
+
+	Version   string    `json:"version,omitempty"`
+	Licence   string    `json:"licence,omitempty"`
+	Provider  string    `json:"provider,omitempty"`
+	UpdatedAt time.Time `json:"updatedAt,omitempty"`
 }
 
 // Gallery representa um conjunto de metainformações sobre temas.
