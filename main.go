@@ -17,7 +17,7 @@ import (
 var (
 	dirArg string
 
-	GALERY_URL = "https://tmtheme-editor.herokuapp.com/gallery.json"
+	galleryURL = "https://tmtheme-editor.herokuapp.com/gallery.json"
 )
 
 func init() {
@@ -27,7 +27,7 @@ func init() {
 
 func main() {
 	g := donwloadGalery()
-	list := models.Galery{}
+	list := models.Gallery{}
 
 	for _, metatheme := range g {
 		filepath, err := downloadTheme(metatheme, dirArg)
@@ -36,9 +36,9 @@ func main() {
 			continue
 		}
 
-		m := models.ThemeMetaData{
+		m := models.ThemeMetadata{
 			Name:  metatheme.Name,
-			Url:   filepath,
+			URL:   filepath,
 			Light: metatheme.Light,
 		}
 
@@ -47,14 +47,14 @@ func main() {
 	replicarGalery(list)
 }
 
-func donwloadGalery() models.Galery {
-	log.Printf("Baixando galeria de temas de %s...", GALERY_URL)
-	resp, err := http.Get(GALERY_URL)
+func donwloadGalery() models.Gallery {
+	log.Printf("Baixando galeria de temas de %s...", galleryURL)
+	resp, err := http.Get(galleryURL)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	meta := models.Galery{}
+	meta := models.Gallery{}
 	err = json.NewDecoder(resp.Body).Decode(&meta)
 	if err != nil {
 		log.Fatalln(err)
@@ -64,7 +64,7 @@ func donwloadGalery() models.Galery {
 	return meta
 }
 
-func downloadTheme(meta models.ThemeMetaData, dirDestino string) (string, error) {
+func downloadTheme(meta models.ThemeMetadata, dirDestino string) (string, error) {
 	var folder = "light"
 	if !meta.Light {
 		folder = "dark"
@@ -80,7 +80,7 @@ func downloadTheme(meta models.ThemeMetaData, dirDestino string) (string, error)
 
 	log.Printf("Baixando tema %s para %s ", meta.Name, filepath)
 
-	req, err := http.Get(meta.Url)
+	req, err := http.Get(meta.URL)
 	if err != nil {
 		log.Println("Falhou")
 		return "", err
@@ -108,7 +108,7 @@ func toFileName(name string) (filename string) {
 	return
 }
 
-func replicarGalery(g models.Galery) {
+func replicarGalery(g models.Gallery) {
 	log.Printf("Replicando... ")
 	data, err := json.Marshal(g)
 
