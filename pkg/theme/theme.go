@@ -1,7 +1,6 @@
 package theme
 
 import (
-	"io"
 	"time"
 )
 
@@ -24,5 +23,4 @@ type Gallery []Theme
 // Provider disponibiliza metainformações sobre temas a partir de uma fonte.
 type Provider interface {
 	GetGallery() (Gallery, error)
-	Download(url string, to io.Writer) error
 }
