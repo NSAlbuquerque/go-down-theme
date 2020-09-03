@@ -1,0 +1,4 @@
+*.tmTheme
+downloads/
+temp/
+go.sum
