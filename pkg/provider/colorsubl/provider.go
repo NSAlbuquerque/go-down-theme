@@ -11,6 +11,7 @@ import (
 const (
 	galleryURL    = "https://raw.githubusercontent.com/Colorsublime/Colorsublime-Themes/master/themes.json"
 	themeFilePath = "https://raw.githubusercontent.com/Colorsublime/Colorsublime-Themes/master/themes/"
+	providerName  = "Color Sublime"
 )
 
 type provider struct {
@@ -58,7 +59,8 @@ func (p *provider) GetGallery() (gallery theme.Gallery, err error) {
 	for _, td := range themeData {
 		t := theme.Theme{
 			Name:     td.Title,
-			Provider: td.Author,
+			Author:   td.Author,
+			Provider: providerName,
 			URL:      themeFilePath + td.FileName,
 		}
 

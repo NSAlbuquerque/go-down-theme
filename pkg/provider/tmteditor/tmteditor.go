@@ -66,9 +66,11 @@ func (p *provider) GetGallery() (theme.Gallery, error) {
 	for _, tmtTheme := range editorThemes {
 
 		th := theme.Theme{
-			Name:  tmtTheme.Name,
-			Light: tmtTheme.Light,
-			URL:   tmtTheme.URL,
+			Name:     tmtTheme.Name,
+			Provider: providerName,
+			Author:   tmtTheme.Author,
+			Light:    tmtTheme.Light,
+			URL:      tmtTheme.URL,
 		}
 
 		repo, err := parseRepoFromURL(tmtTheme.URL)

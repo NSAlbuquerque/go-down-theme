@@ -7,6 +7,7 @@ import (
 // Theme metainformações sobre temas
 type Theme struct {
 	Name        string `json:"name"`
+	Author      string `json:"author"`
 	URL         string `json:"url"`
 	Light       bool   `json:"light"`
 	ProjectRepo string `json:"projectRepo"`

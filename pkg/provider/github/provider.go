@@ -15,6 +15,7 @@ import (
 
 const (
 	searchEndpointFmt = "https://api.github.com/search/code?q=+extension:.tmTheme+repo:%s/%s&page=%d&per_page=%d"
+	providerName      = "Github"
 )
 
 type provider struct {
@@ -52,8 +53,9 @@ func (p *provider) GetGallery() (theme.Gallery, error) {
 	for _, f := range files {
 		t := theme.Theme{
 			Name:        f.Name,
+			Author:      p.repo.Owner,
+			Provider:    providerName,
 			ProjectRepo: p.repo.String(),
-			Provider:    p.repo.Owner,
 			URL:         f.DownloadURL,
 		}
 
