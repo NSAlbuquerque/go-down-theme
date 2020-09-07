@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"math"
 	"net/http"
 	"strings"
@@ -21,12 +20,23 @@ const (
 type provider struct {
 	token string
 	repo  *Repo
+	cli   *http.Client
 }
 
-// NewProvider returns a github repo theme provider.
+// NewProvider retorna um provedor de temas para um repositório do github.
 func NewProvider(repo *Repo, token string) theme.Provider {
 	return &provider{
 		repo: repo,
+		cli:  http.DefaultClient,
+	}
+}
+
+// NewProviderWithClient retorna um provedor de temas para um repositório do github.
+// Com um cliente HTTP específico.
+func NewProviderWithClient(repo *Repo, token string, cli *http.Client) theme.Provider {
+	return &provider{
+		repo: repo,
+		cli:  cli,
 	}
 }
 
@@ -99,6 +109,10 @@ func (p *provider) findInternalThemeFiles() ([]File, error) {
 }
 
 func (p *provider) fetch(page, perPage int) (total int, files []File, err error) {
+	if p.cli == nil {
+		err = errors.New("the http client must be specified")
+		return
+	}
 	var endpoint = fmt.Sprintf(
 		searchEndpointFmt,
 		p.repo.Owner,
@@ -107,7 +121,7 @@ func (p *provider) fetch(page, perPage int) (total int, files []File, err error)
 		perPage,
 	)
 
-	log.Println("Fetch page:", page)
+	// log.Println("Fetch page:", page)
 
 	req, err := http.NewRequest(http.MethodGet, endpoint, nil)
 	if err != nil {
@@ -118,7 +132,7 @@ func (p *provider) fetch(page, perPage int) (total int, files []File, err error)
 		req.Header.Add("Authorization", "token "+p.token)
 	}
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := p.cli.Do(req)
 	if err != nil {
 		return
 	}

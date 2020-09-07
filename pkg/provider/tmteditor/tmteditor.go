@@ -24,15 +24,26 @@ const (
 	providerName = "tmTheme-editor"
 )
 
-type provider struct{}
-
-// NewProvider returns a tmTheme-editor theme provider.
-func NewProvider() theme.Provider {
-	return &provider{}
+type provider struct {
+	cli *http.Client
 }
 
-func (*provider) GetGallery() (theme.Gallery, error) {
-	resp, err := http.Get(sourceURL)
+// NewProvider retorna um provedor de temas para o tmTheme-editor.
+func NewProvider() theme.Provider {
+	return &provider{http.DefaultClient}
+}
+
+// NewProviderWithClient retorna um provedor de temas para o tmTheme-editor.
+// Com um cliente HTTP específico.
+func NewProviderWithClient(cli *http.Client) theme.Provider {
+	return &provider{cli}
+}
+
+func (p *provider) GetGallery() (theme.Gallery, error) {
+	if p.cli == nil {
+		return nil, errors.New("the http client must be specified")
+	}
+	resp, err := p.cli.Get(sourceURL)
 	if err != nil {
 		return nil, err
 	}

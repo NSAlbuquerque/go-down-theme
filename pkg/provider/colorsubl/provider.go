@@ -2,6 +2,7 @@ package colorsubl
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	"github.com/albuquerq/go-down-theme/pkg/theme"
@@ -12,16 +13,30 @@ const (
 	themeFilePath = "https://raw.githubusercontent.com/Colorsublime/Colorsublime-Themes/master/themes/"
 )
 
-type csblprov struct{}
+type provider struct {
+	cli *http.Client
+}
 
 // NewProvider retorna um provedor de temas do ColorSublime.
 func NewProvider() theme.Provider {
-	return &csblprov{}
+	return &provider{
+		cli: http.DefaultClient,
+	}
 }
 
-func (*csblprov) GetGallery() (gallery theme.Gallery, err error) {
+// NewProviderWithClient retorna um provedor de temas do ColorSublime com um cliente HTTP específico.
+func NewProviderWithClient(cli *http.Client) theme.Provider {
+	return &provider{
+		cli: cli,
+	}
+}
 
-	resp, err := http.Get(galleryURL)
+func (p *provider) GetGallery() (gallery theme.Gallery, err error) {
+	if p.cli == nil {
+		return nil, errors.New("the http client must be specified")
+	}
+
+	resp, err := p.cli.Get(galleryURL)
 	if err != nil {
 		return
 	}
