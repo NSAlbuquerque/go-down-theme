@@ -72,6 +72,7 @@ func (p *provider) GetGallery() (theme.Gallery, error) {
 		repo, err := github.RepoFromURL(tmtTheme.URL)
 		if err == nil {
 			th.ProjectRepo = repo.String()
+			th.Readme = repo.InferReadme()
 		} else {
 			log.Println("fail on get repo info:", err)
 		}

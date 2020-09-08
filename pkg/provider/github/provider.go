@@ -57,6 +57,7 @@ func (p *provider) GetGallery() (theme.Gallery, error) {
 			Provider:    providerName,
 			ProjectRepo: p.repo.String(),
 			URL:         f.DownloadURL,
+			Readme:      p.repo.InferReadme(),
 		}
 
 		gallery = append(gallery, t)

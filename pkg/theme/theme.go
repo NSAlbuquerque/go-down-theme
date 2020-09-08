@@ -12,6 +12,7 @@ type Theme struct {
 	URL         string `json:"url"`
 	Light       bool   `json:"light"`
 	ProjectRepo string `json:"projectRepo"`
+	Readme      string `json:"readme"`
 
 	Version   string    `json:"version,omitempty"`
 	Licence   string    `json:"licence,omitempty"`

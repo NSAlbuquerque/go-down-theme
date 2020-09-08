@@ -17,6 +17,12 @@ func (r Repo) String() string {
 	return fmt.Sprintf("https://github.com/%s/%s", r.Owner, r.Name)
 }
 
+// InferReadme retorna o endereço mais provável do arquivo README.md do repositório.
+// A existência do endereço não é verificada, ele pode ser um endereço inválido.
+func (r Repo) InferReadme() string {
+	return fmt.Sprintf("https://raw.githubusercontent.com/%s/%s/master/README.md", r.Owner, r.Name)
+}
+
 // File ...
 type File struct {
 	Name        string
