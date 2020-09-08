@@ -43,14 +43,14 @@ func RepoFromURL(addr string) (*Repo, error) {
 	}
 
 	parts := strings.SplitN(ghurl.Path[1:], "/", 4)
-	if len(parts) < 3 {
+	if len(parts) < 2 {
 		return nil, fmt.Errorf("invalid github URL: %s", addr)
 	}
 
 	repo := &Repo{
 		Owner:  parts[0],
 		Name:   parts[1],
-		Branch: parts[2],
+		Branch: "master",
 	}
 
 	return repo, nil

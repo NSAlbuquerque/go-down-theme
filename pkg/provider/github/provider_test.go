@@ -61,15 +61,33 @@ func TestGithubProvider_GetGallery(t *testing.T) {
 
 func TestRepoFromURL(t *testing.T) {
 
-	samples := []string{
-		"https://raw.githubusercontent.com/idleberg/RetroComputers.tmTheme/master/Atari%20ST.tmTheme",
-		"https://raw.githubusercontent.com/axar/Axar-SublimeTheme/master/Axar.tmTheme",
-		"https://raw.githubusercontent.com/chriskempson/base16-textmate/master/themes/base16-ashes.light.tmTheme",
+	cases := []struct {
+		in  string
+		err bool
+	}{
+		{"https://packagecontrol.io/repository.json", true},
+		{"https://github.com/idleberg/WarpOS.tmTheme", false},
+		{"https://packagecontrol.io/repository.json", true},
+		{"https://github.com/ctf0/Yeti_ST3", false},
+		{"https://packagecontrol.io/repository.json", true},
+		{"https://github.com/anton-rudeshko/sublime-yandex-wiki", false},
+		{"https://packagecontrol.io/repository.json", true},
+		{"https://github.com/jrvieira/zero-dark", false},
+		{"https://packagecontrol.io/repository.json", true},
+		{"https://raw.githubusercontent.com/idleberg/RetroComputers.tmTheme/master/Atari%20ST.tmTheme", false},
+		{"https://raw.githubusercontent.com/axar/Axar-SublimeTheme/master/Axar.tmTheme", false},
+		{"https://raw.githubusercontent.com/chriskempson/base16-textmate/master/themes/base16-ashes.light.tmTheme", false},
 	}
 
-	for _, s := range samples {
-		repo, err := RepoFromURL(s)
-		assert.NoError(t, err)
+	for _, c := range cases {
+		repo, err := RepoFromURL(c.in)
+		assert.Equal(t, c.err, err != nil)
+		if !c.err {
+			assert.NoError(t, err)
+		}
+		if err != nil {
+			continue
+		}
 		assert.NotEmpty(t, repo.Owner, "o nome do dono do repositório é obrigatório")
 		t.Log(repo)
 	}
