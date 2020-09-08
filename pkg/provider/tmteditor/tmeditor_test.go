@@ -36,19 +36,3 @@ func Test_parseEditorThemes(t *testing.T) {
 		assert.NotEmpty(t, th.URL, "o URL de download do tema é obrigatório")
 	}
 }
-
-func TestParseRepoFromURL(t *testing.T) {
-
-	samples := []string{
-		"https://raw.githubusercontent.com/idleberg/RetroComputers.tmTheme/master/Atari%20ST.tmTheme",
-		"https://raw.githubusercontent.com/axar/Axar-SublimeTheme/master/Axar.tmTheme",
-		"https://raw.githubusercontent.com/chriskempson/base16-textmate/master/themes/base16-ashes.light.tmTheme",
-	}
-
-	for _, s := range samples {
-		repo, err := parseRepoFromURL(s)
-		assert.NoError(t, err)
-		assert.NotEmpty(t, repo.Owner, "o nome do dono do repositório é obrigatório")
-	}
-
-}

@@ -3,15 +3,11 @@ package tmteditor
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
-	"net/url"
-	"strings"
 
 	"github.com/albuquerq/go-down-theme/pkg/provider/github"
-
 	"github.com/albuquerq/go-down-theme/pkg/theme"
 )
 
@@ -73,7 +69,7 @@ func (p *provider) GetGallery() (theme.Gallery, error) {
 			URL:      tmtTheme.URL,
 		}
 
-		repo, err := parseRepoFromURL(tmtTheme.URL)
+		repo, err := github.RepoFromURL(tmtTheme.URL)
 		if err == nil {
 			th.ProjectRepo = repo.String()
 			th.Provider = repo.Owner
@@ -85,38 +81,6 @@ func (p *provider) GetGallery() (theme.Gallery, error) {
 	}
 
 	return gallery, nil
-}
-
-func parseRepoFromURL(sourceURL string) (*github.Repo, error) {
-	purl, err := url.Parse(sourceURL)
-	if err != nil {
-		return nil, err
-	}
-
-	if purl.Hostname() != "raw.githubusercontent.com" {
-		return nil, errors.New("invalid github raw file url: " + sourceURL)
-	}
-
-	parts := strings.SplitN(purl.Path[1:], "/", 4)
-
-	if len(parts) != 4 {
-		return nil, errors.New("invalid github raw file url")
-	}
-
-	repoURL := url.URL{
-		Scheme: purl.Scheme,
-		Host:   "github.com",
-	}
-
-	repo := &github.Repo{
-		Owner:  parts[0],
-		Name:   parts[1],
-		Branch: parts[2],
-	}
-
-	repoURL.Path = fmt.Sprintf("%s/%s", repo.Owner, repo.Name)
-
-	return repo, nil
 }
 
 type editorTheme struct {
