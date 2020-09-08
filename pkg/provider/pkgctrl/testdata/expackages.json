@@ -1,0 +1,271 @@
+{
+    "name": "monokai",
+    "packages": [
+        {
+            "name": "five_easy_color_schemes",
+            "description": "Monokai, Solarized, and three other popular color schemes for Sublime Text",
+            "authors": [
+                "gerardroche"
+            ],
+            "labels": [
+                "color scheme",
+                "monokai",
+                "solarized"
+            ],
+            "platforms": [
+                "windows",
+                "osx",
+                "linux"
+            ],
+            "st_versions": [
+                3,
+                4
+            ],
+            "last_modified": "2017-04-19T07:44:39Z",
+            "last_seen": "2017-06-05T17:05:17Z",
+            "is_missing": false,
+            "trending_rank": null,
+            "installs_rank": 3277,
+            "first_seen": "2016-06-27T20:00:04Z",
+            "z_value": null,
+            "unique_installs": 785
+        },
+        {
+            "name": "Material Monokai",
+            "description": "Material Monokai Color Scheme for Sublime Text 3",
+            "authors": [
+                "hlrossato"
+            ],
+            "labels": [
+                "color scheme",
+                "material design",
+                "monokai"
+            ],
+            "platforms": [
+                "windows",
+                "osx",
+                "linux"
+            ],
+            "st_versions": [
+                2,
+                3,
+                4
+            ],
+            "last_modified": "2017-11-10T16:51:32Z",
+            "last_seen": "2020-09-07T18:40:59Z",
+            "is_missing": false,
+            "trending_rank": null,
+            "installs_rank": 458,
+            "first_seen": "2017-06-06T04:51:38Z",
+            "z_value": null,
+            "unique_installs": 36626
+        },
+        {
+            "name": "Monocyanide Colorscheme",
+            "description": "Sublime Text: Monocyanide is Cyanide-ified Monokai Extended: darker background & lighter foregrounds.",
+            "authors": [
+                "Centril"
+            ],
+            "labels": [
+                "monokai",
+                "cyanide",
+                "color scheme"
+            ],
+            "platforms": [
+                "windows",
+                "osx",
+                "linux"
+            ],
+            "st_versions": [
+                2,
+                3,
+                4
+            ],
+            "last_modified": "2015-10-22T15:48:50Z",
+            "last_seen": "2020-09-07T16:51:58Z",
+            "is_missing": false,
+            "trending_rank": null,
+            "installs_rank": 1191,
+            "first_seen": "2014-10-19T07:20:48Z",
+            "z_value": null,
+            "unique_installs": 9226
+        },
+        {
+            "name": "Monokai++",
+            "description": "A modern Monokai theme for Sublime Text 3 and Visual Studio Code",
+            "authors": [
+                "dcasella"
+            ],
+            "labels": [
+                "monokai",
+                "color scheme"
+            ],
+            "platforms": [
+                "windows",
+                "osx",
+                "linux"
+            ],
+            "st_versions": [
+                2,
+                3,
+                4
+            ],
+            "last_modified": "2020-03-12T13:49:32Z",
+            "last_seen": "2020-09-07T16:52:08Z",
+            "is_missing": false,
+            "trending_rank": null,
+            "installs_rank": 427,
+            "first_seen": "2017-09-19T00:12:15Z",
+            "z_value": null,
+            "unique_installs": 40142
+        },
+        {
+            "name": "MonokaiC",
+            "description": "A Monokai color scheme for Sublime Text, providing both colored and text-style preview for MarkdownEditing",
+            "authors": [
+                "avivace"
+            ],
+            "labels": [
+                "monokai",
+                "color scheme",
+                "markdown",
+                "preview"
+            ],
+            "platforms": [
+                "windows",
+                "osx",
+                "linux"
+            ],
+            "st_versions": [
+                2,
+                3,
+                4
+            ],
+            "last_modified": "2020-06-24T14:51:02Z",
+            "last_seen": "2020-09-07T16:52:10Z",
+            "is_missing": false,
+            "trending_rank": null,
+            "installs_rank": 2818,
+            "first_seen": "2019-06-23T14:41:21Z",
+            "z_value": null,
+            "unique_installs": 1337
+        },
+        {
+            "name": "Monokai JSON+",
+            "description": "Sublime's Monokai Theme with Beautiful Colored JSON",
+            "authors": [
+                "ColibriApps"
+            ],
+            "labels": [
+                "monokai",
+                "color scheme"
+            ],
+            "platforms": [
+                "windows",
+                "osx",
+                "linux"
+            ],
+            "st_versions": [
+                2,
+                3,
+                4
+            ],
+            "last_modified": "2015-04-23T10:48:43Z",
+            "last_seen": "2020-09-07T16:52:03Z",
+            "is_missing": false,
+            "trending_rank": null,
+            "installs_rank": 430,
+            "first_seen": "2015-04-13T22:41:43Z",
+            "z_value": null,
+            "unique_installs": 39463
+        },
+        {
+            "name": "Monokai Neue",
+            "description": "A slightly modified and extended version of Monokai based on Monokai Extened with support added for highlighted levels of JSON based on MonokaiJSON+.",
+            "authors": [
+                "josh-kaplan"
+            ],
+            "labels": [
+                "monokai",
+                "color scheme"
+            ],
+            "platforms": [
+                "windows",
+                "osx",
+                "linux"
+            ],
+            "st_versions": [
+                2,
+                3,
+                4
+            ],
+            "last_modified": "2020-03-27T01:31:15Z",
+            "last_seen": "2020-09-07T16:52:04Z",
+            "is_missing": false,
+            "trending_rank": null,
+            "installs_rank": 1307,
+            "first_seen": "2015-05-04T13:57:47Z",
+            "z_value": null,
+            "unique_installs": 7647
+        },
+        {
+            "name": "Monokai Rich",
+            "description": "Extends monokai with rich syntax highlighting for: PHP, HTML, CSS, JS, Blade, Markdown ..",
+            "authors": [
+                "mmghv"
+            ],
+            "labels": [
+                "monokai",
+                "color scheme"
+            ],
+            "platforms": [
+                "windows",
+                "osx",
+                "linux"
+            ],
+            "st_versions": [
+                2,
+                3,
+                4
+            ],
+            "last_modified": "2017-10-13T18:39:57Z",
+            "last_seen": "2020-09-07T16:52:05Z",
+            "is_missing": false,
+            "trending_rank": null,
+            "installs_rank": 1714,
+            "first_seen": "2016-10-03T15:45:25Z",
+            "z_value": null,
+            "unique_installs": 4576
+        },
+        {
+            "name": "Monokai - Spacegray",
+            "description": "Monokai themes for Sublime matching Spacegray (dark and eighties) backgrounds",
+            "authors": [
+                "pyoio"
+            ],
+            "labels": [
+                "monokai",
+                "spacegray",
+                "color scheme"
+            ],
+            "platforms": [
+                "windows",
+                "osx",
+                "linux"
+            ],
+            "st_versions": [
+                2,
+                3,
+                4
+            ],
+            "last_modified": "2015-07-30T10:33:28Z",
+            "last_seen": "2020-09-07T16:51:59Z",
+            "is_missing": false,
+            "trending_rank": 79,
+            "installs_rank": 211,
+            "first_seen": "2015-08-04T12:38:26Z",
+            "z_value": -0.245599168686712,
+            "unique_installs": 94081
+        }
+    ]
+}
