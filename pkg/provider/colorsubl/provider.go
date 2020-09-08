@@ -9,9 +9,9 @@ import (
 )
 
 const (
+	providerName  = "Color Sublime"
 	galleryURL    = "https://raw.githubusercontent.com/Colorsublime/Colorsublime-Themes/master/themes.json"
 	themeFilePath = "https://raw.githubusercontent.com/Colorsublime/Colorsublime-Themes/master/themes/"
-	providerName  = "Color Sublime"
 )
 
 type provider struct {
@@ -44,9 +44,10 @@ func (p *provider) GetGallery() (gallery theme.Gallery, err error) {
 	defer resp.Body.Close()
 
 	themeData := []struct {
-		Author   string
-		FileName string
-		Title    string
+		Author      string
+		Description string
+		FileName    string
+		Title       string
 	}{}
 
 	err = json.NewDecoder(resp.Body).Decode(&themeData)
@@ -58,10 +59,11 @@ func (p *provider) GetGallery() (gallery theme.Gallery, err error) {
 
 	for _, td := range themeData {
 		t := theme.Theme{
-			Name:     td.Title,
-			Author:   td.Author,
-			Provider: providerName,
-			URL:      themeFilePath + td.FileName,
+			Name:        td.Title,
+			Author:      td.Author,
+			Description: td.Description,
+			Provider:    providerName,
+			URL:         themeFilePath + td.FileName,
 		}
 
 		gallery = append(gallery, t)

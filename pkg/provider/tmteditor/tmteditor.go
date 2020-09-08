@@ -16,8 +16,8 @@ func init() {
 }
 
 const (
-	sourceURL    = "https://tmtheme-editor.herokuapp.com/gallery.json"
 	providerName = "tmTheme-editor"
+	sourceURL    = "https://tmtheme-editor.herokuapp.com/gallery.json"
 )
 
 type provider struct {
@@ -72,7 +72,6 @@ func (p *provider) GetGallery() (theme.Gallery, error) {
 		repo, err := github.RepoFromURL(tmtTheme.URL)
 		if err == nil {
 			th.ProjectRepo = repo.String()
-			th.Provider = repo.Owner
 		} else {
 			log.Println("fail on get repo info:", err)
 		}
@@ -84,11 +83,10 @@ func (p *provider) GetGallery() (theme.Gallery, error) {
 }
 
 type editorTheme struct {
-	Name       string `json:"name"`
-	URL        string `json:"url"`
-	Light      bool   `json:"light"`
-	Author     string `json:"author"`
-	Maintainer string `json:"maintainer"`
+	Name   string `json:"name"`
+	URL    string `json:"url"`
+	Light  bool   `json:"light"`
+	Author string `json:"author"`
 }
 
 func parseEditorThemes(dataSource io.Reader) ([]editorTheme, error) {

@@ -14,8 +14,8 @@ import (
 )
 
 const (
-	searchEndpointFmt = "https://api.github.com/search/code?q=+extension:.tmTheme+repo:%s/%s&page=%d&per_page=%d"
 	providerName      = "Github"
+	searchEndpointFmt = "https://api.github.com/search/code?q=+extension:.tmTheme+repo:%s/%s&page=%d&per_page=%d"
 )
 
 type provider struct {
@@ -123,8 +123,6 @@ func (p *provider) fetch(page, perPage int) (total int, files []File, err error)
 		perPage,
 	)
 
-	// log.Println("Fetch page:", page)
-
 	req, err := http.NewRequest(http.MethodGet, endpoint, nil)
 	if err != nil {
 		return
@@ -144,14 +142,6 @@ func (p *provider) fetch(page, perPage int) (total int, files []File, err error)
 		err = errors.New("error on perform search request")
 		return
 	}
-
-	// log.Printf(
-	// 	"Rate limit: %s\nRemaining: %s\nReset: %s\nLinks: %s\n",
-	// 	resp.Header.Get("X-RateLimit-Limit"),
-	// 	resp.Header.Get("X-RateLimit-Remaining"),
-	// 	resp.Header.Get("X-RateLimit-Reset"),
-	// 	resp.Header.Get("Link"),
-	// )
 
 	searchResult := struct {
 		Total int `json:"total_count"`
