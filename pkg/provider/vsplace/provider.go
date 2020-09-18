@@ -15,10 +15,12 @@ import (
 
 	"golang.org/x/sync/errgroup"
 
+	"github.com/albuquerq/go-down-theme/pkg/provider/github"
 	"github.com/albuquerq/go-down-theme/pkg/theme"
 )
 
 const (
+	providerName       = "Visual Studio Marketplace"
 	extensionsEndpoint = "https://marketplace.visualstudio.com/_apis/public/gallery/extensionquery"
 
 	pgSize     = 100
@@ -37,8 +39,40 @@ func NewProvider() theme.Provider {
 }
 
 func (p *provider) GetGallery() (theme.Gallery, error) {
+	exts, err := p.fetchExtensions()
+	if err != nil {
+		return nil, err
+	}
 
-	return nil, nil
+	var gallery theme.Gallery
+
+	for _, ext := range exts {
+		version := ext.Versions[0]
+
+		t := theme.Theme{
+			Author:      ext.Publisher.Name,
+			Provider:    providerName,
+			Version:     version.Version,
+			Name:        ext.DisplayName,
+			Description: ext.Description,
+			ProjectRepo: version.Properties.Get("Microsoft.VisualStudio.Services.Links.Source"),
+			Readme:      version.Properties.Get("Microsoft.VisualStudio.Services.Links.Learn"),
+			UpdatedAt:   version.LastUpdated,
+		}
+
+		branding := strings.ToLower(version.Properties.Get("Microsoft.VisualStudio.Services.Branding.Theme"))
+		t.Light = branding == "light"
+
+		if strings.Contains(t.ProjectRepo, "github") {
+			repo, err := github.RepoFromURL(t.ProjectRepo)
+			if err == nil {
+				t.Readme = repo.InferReadme()
+			}
+		}
+
+		gallery = append(gallery, t)
+	}
+	return gallery, nil
 }
 
 type extension struct {

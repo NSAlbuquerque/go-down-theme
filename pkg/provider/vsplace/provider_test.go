@@ -7,6 +7,8 @@ import (
 	"path"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestPropertiesParse(t *testing.T) {
@@ -103,4 +105,17 @@ func TestProvider_fetchExtensions(t *testing.T) {
 	for i, ext := range extensions {
 		t.Logf("%d - %s [%s]", i, ext.DisplayName, ext.Publisher.DisplayName)
 	}
+}
+
+func TestProvider_GetGallery(t *testing.T) {
+	p := NewProvider()
+	gallery, err := p.GetGallery()
+	assert.NoError(t, err)
+
+	assert.Less(t, 0, len(gallery))
+
+	for _, th := range gallery {
+		t.Logf("%#v", th)
+	}
+
 }
