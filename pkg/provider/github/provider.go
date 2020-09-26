@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/albuquerq/go-down-theme/pkg/theme"
 	"golang.org/x/sync/errgroup"
@@ -16,6 +17,7 @@ import (
 const (
 	providerName      = "Github"
 	searchEndpointFmt = "https://api.github.com/search/code?q=+extension:.tmTheme+repo:%s/%s&page=%d&per_page=%d"
+	reqAverage        = 5 // Requisições por segundo.
 )
 
 type provider struct {
@@ -68,8 +70,6 @@ func (p *provider) GetGallery() (theme.Gallery, error) {
 
 func (p *provider) findInternalThemeFiles() ([]File, error) {
 
-	// TODO: caso não tenha branch definido, fazer consulta na API.
-
 	var (
 		page    = 1
 		perPage = 100
@@ -102,6 +102,8 @@ func (p *provider) findInternalThemeFiles() ([]File, error) {
 			mux.Unlock()
 			return nil
 		})
+
+		time.Sleep(time.Second / reqAverage)
 	}
 
 	err = group.Wait()

@@ -89,7 +89,7 @@ func TestRepoFromURL(t *testing.T) {
 			continue
 		}
 		assert.NotEmpty(t, repo.Owner, "o nome do dono do repositório é obrigatório")
-		t.Log(repo)
+		t.Log(repo, repo.Branch)
 	}
 
 }
