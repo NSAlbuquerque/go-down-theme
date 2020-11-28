@@ -2,8 +2,8 @@ package github
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -11,6 +11,12 @@ import (
 
 const (
 	branchEndpointFmt = "https://api.github.com/repos/%s/%s/branches"
+)
+
+// Github related errors.
+var (
+	ErrDefaultBranchNotFound = errors.New("default brach not found")
+	ErrRateLimitExceeded     = errors.New("API hate limit has exceeded")
 )
 
 // Repo representa um repositório do github.
@@ -50,8 +56,10 @@ func (r *Repo) LoadDefaultBranch() error {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		log.Println(resp.Status, resp.StatusCode)
-		return fmt.Errorf("error on fetch default branch")
+		if resp.StatusCode == 403 {
+			return ErrRateLimitExceeded
+		}
+		return ErrDefaultBranchNotFound
 	}
 
 	branches := []struct {
@@ -71,8 +79,7 @@ func (r *Repo) LoadDefaultBranch() error {
 	}
 
 	if r.Branch == "" {
-		log.Println("default branch not found")
-		return fmt.Errorf("default branch not found")
+		return ErrDefaultBranchNotFound
 	}
 
 	return nil

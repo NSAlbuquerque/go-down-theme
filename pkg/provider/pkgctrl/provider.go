@@ -4,6 +4,7 @@ package pkgctrl
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -26,22 +27,24 @@ const (
 // DefaultLabels labels com temas no Sublime Package Control.
 var DefaultLabels = []string{"theme", "color scheme", "monokai"}
 
-// DefaultRequestAverage número de requisições por segundo.
-const DefaultRequestAverage = 25
+// DefaultRequestsInterval número de requisições por segundo.
+const DefaultRequestsInterval = time.Second / 25
 
 type provider struct {
-	cli            *http.Client
-	labels         []string
-	requestAverage int
+	cli              *http.Client
+	labels           []string
+	requestsInterval time.Duration
+	tiker            *time.Ticker
 }
 
 // NewProvider retorna um provedor de temas do Package Control.
 // Busca somente por pacotes que estejam nos labels informados.
 func NewProvider(labels []string) theme.Provider {
 	return &provider{
-		labels:         labels,
-		cli:            http.DefaultClient,
-		requestAverage: DefaultRequestAverage,
+		labels:           labels,
+		cli:              http.DefaultClient,
+		requestsInterval: DefaultRequestsInterval,
+		tiker:            time.NewTicker(DefaultRequestsInterval),
 	}
 }
 
@@ -54,8 +57,9 @@ func NewProviderWithClient(labels []string, cli *http.Client) theme.Provider {
 	}
 }
 
-func (p *provider) SetRequestAverage(rav int) {
-	p.requestAverage = rav
+func (p *provider) SetRequestsInterval(interval time.Duration) {
+	p.requestsInterval = interval
+	p.tiker.Reset(p.requestsInterval)
 }
 
 func (p *provider) GetGallery() (theme.Gallery, error) {
@@ -69,7 +73,7 @@ func (p *provider) GetGallery() (theme.Gallery, error) {
 		return nil, err
 	}
 
-	gallery := theme.Gallery{}
+	var gallery theme.Gallery
 
 	for _, pkg := range pkgs {
 
@@ -77,11 +81,20 @@ func (p *provider) GetGallery() (theme.Gallery, error) {
 
 		for _, src := range pkg.Sources {
 			repo, err := github.RepoFromURL(src)
-			if err == nil {
+			if err != nil {
+				if err == github.ErrDefaultBranchNotFound || err == github.ErrRateLimitExceeded {
+					log.Println(pkg.Name, err)
+					if repo != nil {
+						srcrepo = repo.String()
+					}
+					break
+				}
+				log.Println(pkg.Name, err)
+				continue
+			}
+			if repo != nil {
 				srcrepo = repo.String()
 				break
-			} else {
-				log.Println(err, repo)
 			}
 		}
 
@@ -210,64 +223,63 @@ func (p *provider) fetchPackages(pkgnames []string) ([]pkg, error) {
 		group errgroup.Group
 	)
 
-	pkgs := []pkg{}
+	var pkgs []pkg
 
-	for i, pkname := range pkgnames {
+	for _, pkname := range pkgnames {
 		pkname := pkname
 
-		if (i % (p.requestAverage - 1)) == 0 {
-			time.Sleep(time.Second)
-		}
-
-		group.Go(func() error {
-			resp, err := p.cli.Get(packageEndpoint + pkname + ".json")
-			if err != nil {
-				return nil
-			}
-			defer resp.Body.Close()
-
-			if resp.StatusCode != http.StatusOK {
+		select {
+		case <-p.tiker.C:
+			group.Go(func() error {
+				resp, err := p.cli.Get(packageEndpoint + pkname + ".json")
 				if err != nil {
-					log.Println("error on dump HTTP response", err)
+					return nil
+				}
+				defer resp.Body.Close()
+
+				if resp.StatusCode != http.StatusOK {
+					if err != nil {
+						log.Println("error on dump HTTP response", err)
+						return err
+					}
+
+					// Pacote não existe mais.
+					if resp.StatusCode == http.StatusNotFound {
+						pk := pkg{
+							Name:      pkname,
+							IsMissing: true,
+							Removed:   true,
+						}
+						mux.Lock()
+						pkgs = append(pkgs, pk)
+						mux.Unlock()
+						return nil
+					}
+
+					return fmt.Errorf("erro on get the %s package", pkname)
+				}
+
+				if resp.Header.Get("content-type") != "application/json" {
+					return fmt.Errorf("not json data returned for the %s package", pkname)
+				}
+
+				pk, err := parsePackage(resp.Body)
+				if err != nil {
 					return err
 				}
 
-				// Pacote não existe mais.
-				if resp.StatusCode == http.StatusNotFound {
-					pk := pkg{
-						Name:      pkname,
-						IsMissing: true,
-						Removed:   true,
-					}
-					mux.Lock()
-					pkgs = append(pkgs, pk)
-					mux.Unlock()
+				// Não adiciona pacotes faltosos.
+				if pk.IsMissing {
 					return nil
 				}
 
-				return errors.New("erro on get " + pkname + " package")
-			}
+				mux.Lock()
+				pkgs = append(pkgs, pk)
+				mux.Unlock()
 
-			if resp.Header.Get("content-type") != "application/json" {
-				return errors.New("not json data returned for" + pkname + " package")
-			}
-
-			pk, err := parsePackage(resp.Body)
-			if err != nil {
-				return err
-			}
-
-			// Não adiciona pacotes faltosos.
-			if pk.IsMissing {
 				return nil
-			}
-
-			mux.Lock()
-			pkgs = append(pkgs, pk)
-			mux.Unlock()
-
-			return nil
-		})
+			})
+		}
 	}
 
 	err := group.Wait()
