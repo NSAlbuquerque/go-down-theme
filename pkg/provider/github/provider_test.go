@@ -26,10 +26,14 @@ func TestGithubProvider_findInternalThemeFiles(t *testing.T) {
 	}
 	assert.NoError(t, err)
 
-	assert.Equal(t, 881, len(files))
+	assert.Equal(t, 155, len(files))
 }
 
 func TestGithubProvider_GetGallery(t *testing.T) {
+
+	err := os.MkdirAll(path.Join(".", "downloads"), os.ModePerm)
+	assert.NoError(t, err)
+
 	repo := Repo{
 		Branch: "master",
 		Owner:  "kristopherjohnson",
@@ -39,9 +43,7 @@ func TestGithubProvider_GetGallery(t *testing.T) {
 	p := NewProvider(&repo, "public_repo").(*provider)
 
 	gallery, err := p.GetGallery()
-	if err != nil {
-		t.Error(err)
-	}
+	assert.NoError(t, err)
 
 	for _, th := range gallery {
 
@@ -50,11 +52,8 @@ func TestGithubProvider_GetGallery(t *testing.T) {
 		b := bytes.Buffer{}
 		err := common.Download(th.URL, &b)
 
-		err = ioutil.WriteFile(path.Join("downloads", th.Name), b.Bytes(), os.ModePerm)
-		if err != nil {
-			t.Error(err)
-		}
-		t.Log("sucesso")
+		err = ioutil.WriteFile(path.Join(".", "downloads", th.Name), b.Bytes(), os.ModeSetuid|os.ModePerm)
+		assert.NoError(t, err)
 	}
 
 }
@@ -82,14 +81,13 @@ func TestRepoFromURL(t *testing.T) {
 	for _, c := range cases {
 		repo, err := RepoFromURL(c.in)
 		assert.Equal(t, c.err, err != nil)
-		if !c.err {
-			assert.NoError(t, err)
-		}
-		if err != nil {
-			continue
-		}
-		assert.NotEmpty(t, repo.Owner, "o nome do dono do repositório é obrigatório")
-		t.Log(repo, repo.Branch)
-	}
 
+		if c.err {
+			assert.Error(t, err)
+		} else {
+			assert.NoError(t, err)
+			assert.NotEmpty(t, repo.Owner, "o nome do dono do repositório é obrigatório")
+			t.Log(repo, repo.Branch)
+		}
+	}
 }
