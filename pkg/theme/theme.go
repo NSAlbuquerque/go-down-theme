@@ -6,6 +6,7 @@ import (
 
 // Theme metainformações sobre temas
 type Theme struct {
+	ID          string `json:"id"`
 	Name        string `json:"name"`
 	Author      string `json:"author"`
 	Description string `json:"description"`
