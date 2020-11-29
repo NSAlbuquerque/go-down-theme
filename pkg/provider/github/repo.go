@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	branchEndpointFmt = "https://api.github.com/repos/%s/%s/branches"
+	repoEndpointFmt = "https://api.github.com/repos/%s/%s"
 )
 
 // Github related errors.
@@ -36,20 +36,20 @@ func (r *Repo) LoadDefaultBranch() error {
 		return nil
 	}
 
-	req, err := http.NewRequest(
-		http.MethodGet,
-		fmt.Sprintf(
-			branchEndpointFmt,
-			r.Owner,
-			r.Name,
-		),
-		nil,
-	)
+	repoData, err := r.fetchRepoData()
 	if err != nil {
-		return err
+		return ErrDefaultBranchNotFound
 	}
 
-	resp, err := http.DefaultClient.Do(req)
+	if repoData.DefaultBranch == "" {
+		return ErrDefaultBranchNotFound
+	}
+
+	r.Branch = repoData.DefaultBranch
+
+	return nil
+}
+
 	if err != nil {
 		return err
 	}
@@ -62,27 +62,33 @@ func (r *Repo) LoadDefaultBranch() error {
 		return ErrDefaultBranchNotFound
 	}
 
-	branches := []struct {
+type apiResponseType struct {
+	License struct {
 		Name string `json:"name"`
-	}{}
+	} `json:"license"`
 
-	err = json.NewDecoder(resp.Body).Decode(&branches)
+	DefaultBranch string `json:"default_branch"`
+}
+
+func (r *Repo) fetchRepoData() (*apiResponseType, error) {
+	resp, err := http.Get(fmt.Sprintf(repoEndpointFmt, r.Owner, r.Name))
 	if err != nil {
-		return err
+		return nil, err
 	}
+	defer resp.Body.Close()
 
-	for _, b := range branches {
-		if b.Name == "master" || b.Name == "main" {
-			r.Branch = b.Name
-			return nil
+	if resp.StatusCode != http.StatusOK {
+		if resp.StatusCode == 403 {
+			return nil, ErrRateLimitExceeded
 		}
+		return nil, ErrDefaultBranchNotFound
 	}
-
-	if r.Branch == "" {
-		return ErrDefaultBranchNotFound
+	var repoData apiResponseType
+	err = json.NewDecoder(resp.Body).Decode(&repoData)
+	if err != nil {
+		return nil, err
 	}
-
-	return nil
+	return &repoData, nil
 }
 
 // InferReadme retorna o endereço mais provável do arquivo README.md do repositório.
