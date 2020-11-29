@@ -57,7 +57,7 @@ func (p *provider) GetGallery() (theme.Gallery, error) {
 			Description: ext.Description,
 			ProjectRepo: version.Properties.Get("Microsoft.VisualStudio.Services.Links.Source"),
 			Readme:      version.Properties.Get("Microsoft.VisualStudio.Services.Links.Learn"),
-			UpdatedAt:   version.LastUpdated,
+			LastUpdate:  version.LastUpdated,
 		}
 
 		branding := strings.ToLower(version.Properties.Get("Microsoft.VisualStudio.Services.Branding.Theme"))

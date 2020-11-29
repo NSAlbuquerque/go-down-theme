@@ -15,10 +15,10 @@ type Theme struct {
 	ProjectRepo string `json:"projectRepo"`
 	Readme      string `json:"readme"`
 
-	Version   string    `json:"version,omitempty"`
-	Licence   string    `json:"licence,omitempty"`
-	Provider  string    `json:"provider,omitempty"`
-	UpdatedAt time.Time `json:"updatedAt,omitempty"`
+	Version    string    `json:"version,omitempty"`
+	Licence    string    `json:"licence,omitempty"`
+	Provider   string    `json:"provider,omitempty"`
+	LastUpdate time.Time `json:"updatedAt,omitempty"`
 }
 
 // Gallery representa um conjunto de metainformações sobre temas.

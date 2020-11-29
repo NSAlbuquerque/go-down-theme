@@ -106,7 +106,7 @@ func (p *Provider) GetGallery() (theme.Gallery, error) {
 			Provider:    providerName,
 			Readme:      pkg.Readme,
 			ProjectRepo: srcrepo,
-			UpdatedAt:   pkg.LastModified,
+			LastUpdate:  pkg.LastModified,
 		}
 
 		if len(pkg.Versions) > 0 {
