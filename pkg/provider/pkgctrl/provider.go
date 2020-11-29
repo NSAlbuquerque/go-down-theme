@@ -15,6 +15,7 @@ import (
 
 	"golang.org/x/sync/errgroup"
 
+	"github.com/albuquerq/go-down-theme/pkg/common"
 	"github.com/albuquerq/go-down-theme/pkg/provider/github"
 	"github.com/albuquerq/go-down-theme/pkg/theme"
 )
@@ -100,13 +101,14 @@ func (p *Provider) GetGallery() (theme.Gallery, error) {
 		}
 
 		th := theme.Theme{
-			Name:        pkg.Name,
-			Description: pkg.Description,
-			Author:      strings.Join(pkg.Authors, ", "),
-			Provider:    providerName,
-			Readme:      pkg.Readme,
-			ProjectRepo: srcrepo,
-			LastUpdate:  pkg.LastModified,
+			Name:          pkg.Name,
+			Description:   pkg.Description,
+			Author:        strings.Join(pkg.Authors, ", "),
+			Provider:      providerName,
+			Readme:        pkg.Readme,
+			ProjectRepoID: common.Hash(srcrepo),
+			ProjectRepo:   srcrepo,
+			LastUpdate:    pkg.LastModified,
 		}
 
 		if len(pkg.Versions) > 0 {

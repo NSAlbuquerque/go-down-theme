@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/albuquerq/go-down-theme/pkg/common"
 	"github.com/albuquerq/go-down-theme/pkg/theme"
 	"golang.org/x/sync/errgroup"
 )
@@ -54,12 +55,13 @@ func (p *provider) GetGallery() (theme.Gallery, error) {
 
 	for _, f := range files {
 		t := theme.Theme{
-			Name:        f.Name,
-			Author:      p.repo.Owner,
-			Provider:    providerName,
-			ProjectRepo: p.repo.String(),
-			URL:         f.DownloadURL,
-			Readme:      p.repo.InferReadme(),
+			Name:          f.Name,
+			Author:        p.repo.Owner,
+			Provider:      providerName,
+			ProjectRepoID: common.Hash(p.repo.String()),
+			ProjectRepo:   p.repo.String(),
+			URL:           f.DownloadURL,
+			Readme:        p.repo.InferReadme(),
 		}
 
 		gallery = append(gallery, t)

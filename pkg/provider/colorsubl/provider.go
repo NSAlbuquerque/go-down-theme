@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/albuquerq/go-down-theme/pkg/common"
 	"github.com/albuquerq/go-down-theme/pkg/provider/github"
 	"github.com/albuquerq/go-down-theme/pkg/theme"
 )
@@ -66,13 +67,14 @@ func (p *provider) GetGallery() (gallery theme.Gallery, err error) {
 	for _, td := range themeData {
 
 		t := theme.Theme{
-			Name:        td.Title,
-			Author:      td.Author,
-			Description: td.Description,
-			Provider:    providerName,
-			URL:         themeFilePath + td.FileName,
-			ProjectRepo: repo.String(),
-			Readme:      repo.InferReadme(),
+			Name:          td.Title,
+			Author:        td.Author,
+			Description:   td.Description,
+			Provider:      providerName,
+			URL:           themeFilePath + td.FileName,
+			ProjectRepoID: common.Hash(repo.String()),
+			ProjectRepo:   repo.String(),
+			Readme:        repo.InferReadme(),
 		}
 
 		gallery = append(gallery, t)

@@ -15,6 +15,7 @@ import (
 
 	"golang.org/x/sync/errgroup"
 
+	"github.com/albuquerq/go-down-theme/pkg/common"
 	"github.com/albuquerq/go-down-theme/pkg/provider/github"
 	"github.com/albuquerq/go-down-theme/pkg/theme"
 )
@@ -49,15 +50,18 @@ func (p *provider) GetGallery() (theme.Gallery, error) {
 	for _, ext := range exts {
 		version := ext.Versions[0]
 
+		repo := version.Properties.Get("Microsoft.VisualStudio.Services.Links.Source")
+
 		t := theme.Theme{
-			Author:      ext.Publisher.Name,
-			Provider:    providerName,
-			Version:     version.Version,
-			Name:        ext.DisplayName,
-			Description: ext.Description,
-			ProjectRepo: version.Properties.Get("Microsoft.VisualStudio.Services.Links.Source"),
-			Readme:      version.Properties.Get("Microsoft.VisualStudio.Services.Links.Learn"),
-			LastUpdate:  version.LastUpdated,
+			Author:        ext.Publisher.Name,
+			Provider:      providerName,
+			Version:       version.Version,
+			Name:          ext.DisplayName,
+			Description:   ext.Description,
+			ProjectRepoID: common.Hash(repo),
+			ProjectRepo:   repo,
+			Readme:        version.Properties.Get("Microsoft.VisualStudio.Services.Links.Learn"),
+			LastUpdate:    version.LastUpdated,
 		}
 
 		branding := strings.ToLower(version.Properties.Get("Microsoft.VisualStudio.Services.Branding.Theme"))

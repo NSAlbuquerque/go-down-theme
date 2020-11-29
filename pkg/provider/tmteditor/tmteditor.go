@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/albuquerq/go-down-theme/pkg/common"
 	"github.com/albuquerq/go-down-theme/pkg/provider/github"
 	"github.com/albuquerq/go-down-theme/pkg/theme"
 )
@@ -72,6 +73,7 @@ func (p *provider) GetGallery() (theme.Gallery, error) {
 		repo, err := github.RepoFromURL(tmtTheme.URL)
 		if err == nil {
 			th.ProjectRepo = repo.String()
+			th.ProjectRepoID = common.Hash(th.ProjectRepo)
 			th.Readme = repo.InferReadme()
 		} else {
 			log.Println("fail on get repo info:", err)
