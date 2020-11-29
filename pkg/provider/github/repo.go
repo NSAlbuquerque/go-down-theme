@@ -18,21 +18,23 @@ var (
 	ErrDefaultBranchNotFound = errors.New("default brach not found")
 	ErrRateLimitExceeded     = errors.New("API hate limit has exceeded")
 	ErrLicenseNotFound       = errors.New("license not found")
+	ErrNoGithubRepository    = errors.New("it is not github repository")
 )
 
 // Repo representa um repositório do github.
 type Repo struct {
-	Name   string `json:"name"`
-	Owner  string `json:"owner"`
-	Branch string `json:"branch"`
+	Name    string `json:"name"`
+	Owner   string `json:"owner"`
+	Branch  string `json:"branch"`
+	License string `json:"license"`
 }
 
 func (r Repo) String() string {
 	return fmt.Sprintf("https://github.com/%s/%s", r.Owner, r.Name)
 }
 
-// LoadDefaultBranch consulta o branch default a partir da API do github e o atribui ao repositório.
-func (r *Repo) LoadDefaultBranch() error {
+// LoadLicenseAndBranch consulta o branch default a partir da API do github e o atribui ao repositório.
+func (r *Repo) LoadLicenseAndBranch() error {
 	if r.Branch != "" {
 		return nil
 	}
@@ -46,22 +48,12 @@ func (r *Repo) LoadDefaultBranch() error {
 		return ErrDefaultBranchNotFound
 	}
 
+	if r.License == "" {
+		r.License = repoData.License.Name
+	}
 	r.Branch = repoData.DefaultBranch
 
 	return nil
-}
-
-// FetchLicense retorna a licença de um repositório.
-// Caso não encontre alicença, retorna ErrLicenseNotFound.
-func (r *Repo) FetchLicense() (string, error) {
-	data, err := r.fetchRepoData()
-	if err != nil {
-		return "", err
-	}
-	if data.License.Name == "" {
-		return "", ErrLicenseNotFound
-	}
-	return data.License.Name, nil
 }
 
 type apiResponseType struct {
@@ -96,7 +88,7 @@ func (r *Repo) fetchRepoData() (*apiResponseType, error) {
 // InferReadme retorna o endereço mais provável do arquivo README.md do repositório.
 // A existência do endereço não é verificada, ele pode ser um endereço inválido.
 func (r Repo) InferReadme() string {
-	err := r.LoadDefaultBranch()
+	err := r.LoadLicenseAndBranch()
 	if err != nil {
 		r.Branch = "master"
 	}
@@ -114,21 +106,21 @@ type File struct {
 func RepoFromURL(addr string) (*Repo, error) {
 	if !strings.Contains(addr, "github.com") &&
 		!strings.Contains(addr, "githubusercontent.com") {
-		return nil, fmt.Errorf("invalid github URL: %s", addr)
+		return nil, ErrNoGithubRepository
 	}
 
 	ghurl, err := url.Parse(addr)
 	if err != nil {
-		return nil, fmt.Errorf("invalid github URL %s: %v", addr, err)
+		return nil, fmt.Errorf("inválid URL")
 	}
 
 	if ghurl.Path == "" {
-		return nil, fmt.Errorf("invalid github URL %s", addr)
+		return nil, ErrNoGithubRepository
 	}
 
 	parts := strings.SplitN(ghurl.Path[1:], "/", 4)
 	if len(parts) < 2 {
-		return nil, fmt.Errorf("invalid github URL: %s", addr)
+		return nil, ErrNoGithubRepository
 	}
 
 	repo := &Repo{
