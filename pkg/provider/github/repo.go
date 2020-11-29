@@ -111,7 +111,7 @@ func RepoFromURL(addr string) (*Repo, error) {
 
 	ghurl, err := url.Parse(addr)
 	if err != nil {
-		return nil, fmt.Errorf("inválid URL")
+		return nil, ErrNoGithubRepository
 	}
 
 	if ghurl.Path == "" {
