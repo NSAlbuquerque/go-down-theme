@@ -17,6 +17,7 @@ const (
 var (
 	ErrDefaultBranchNotFound = errors.New("default brach not found")
 	ErrRateLimitExceeded     = errors.New("API hate limit has exceeded")
+	ErrLicenseNotFound       = errors.New("license not found")
 )
 
 // Repo representa um repositório do github.
@@ -50,17 +51,18 @@ func (r *Repo) LoadDefaultBranch() error {
 	return nil
 }
 
+// FetchLicense retorna a licença de um repositório.
+// Caso não encontre alicença, retorna ErrLicenseNotFound.
+func (r *Repo) FetchLicense() (string, error) {
+	data, err := r.fetchRepoData()
 	if err != nil {
-		return err
+		return "", err
 	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		if resp.StatusCode == 403 {
-			return ErrRateLimitExceeded
-		}
-		return ErrDefaultBranchNotFound
+	if data.License.Name == "" {
+		return "", ErrLicenseNotFound
 	}
+	return data.License.Name, nil
+}
 
 type apiResponseType struct {
 	License struct {
@@ -133,11 +135,5 @@ func RepoFromURL(addr string) (*Repo, error) {
 		Owner: parts[0],
 		Name:  parts[1],
 	}
-
-	err = repo.LoadDefaultBranch()
-	if err != nil {
-		return repo, err
-	}
-
 	return repo, nil
 }
