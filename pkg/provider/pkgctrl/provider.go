@@ -225,8 +225,8 @@ func (p *provider) fetchPackages(pkgnames []string) ([]pkg, error) {
 
 	var pkgs []pkg
 
-	for _, pkname := range pkgnames {
-		pkname := pkname
+	for _, pkgname := range pkgnames {
+		pkname := pkgname
 
 		select {
 		case <-p.tiker.C:
@@ -238,13 +238,7 @@ func (p *provider) fetchPackages(pkgnames []string) ([]pkg, error) {
 				defer resp.Body.Close()
 
 				if resp.StatusCode != http.StatusOK {
-					if err != nil {
-						log.Println("error on dump HTTP response", err)
-						return err
-					}
-
-					// Pacote não existe mais.
-					if resp.StatusCode == http.StatusNotFound {
+					if resp.StatusCode == http.StatusNotFound { // Pacote não existe mais.
 						pk := pkg{
 							Name:      pkname,
 							IsMissing: true,
@@ -266,11 +260,6 @@ func (p *provider) fetchPackages(pkgnames []string) ([]pkg, error) {
 				pk, err := parsePackage(resp.Body)
 				if err != nil {
 					return err
-				}
-
-				// Não adiciona pacotes faltosos.
-				if pk.IsMissing {
-					return nil
 				}
 
 				mux.Lock()
