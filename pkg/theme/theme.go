@@ -11,14 +11,16 @@ type Theme struct {
 	Author      string `json:"author"`
 	Description string `json:"description"`
 	URL         string `json:"url"`
+	Hash        string `json:"hash"`
 	Light       bool   `json:"light"`
-	ProjectRepo string `json:"projectRepo"`
-	Readme      string `json:"readme"`
+	Version     string `json:"version,omitempty"`
 
-	Version    string    `json:"version,omitempty"`
-	Licence    string    `json:"licence,omitempty"`
-	Provider   string    `json:"provider,omitempty"`
-	LastUpdate time.Time `json:"updatedAt,omitempty"`
+	ProjectRepoID string    `json:"projectRepoId"`
+	ProjectRepo   string    `json:"projectRepo"`
+	Readme        string    `json:"readme"`
+	License       string    `json:"license,omitempty"`
+	Provider      string    `json:"provider,omitempty"`
+	LastUpdate    time.Time `json:"updatedAt,omitempty"`
 }
 
 // Gallery representa um conjunto de metainformações sobre temas.
