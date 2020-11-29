@@ -63,6 +63,8 @@ func (p *provider) SetRequestsInterval(interval time.Duration) {
 	p.tiker.Reset(p.requestsInterval)
 }
 
+// GetGallery retorna a galeria de temas.
+// Em caso de erro retorna erro e a galeria de melhor esforço.
 func (p *provider) GetGallery() (theme.Gallery, error) {
 	names, err := p.fetchPackagesNames()
 	if err != nil {
@@ -78,19 +80,16 @@ func (p *provider) GetGallery() (theme.Gallery, error) {
 
 	for _, pkg := range pkgs {
 
+		if pkg.IsMissing {
+			continue
+		}
+
 		var srcrepo string
 
 		for _, src := range pkg.Sources {
+			srcrepo = src
 			repo, err := github.RepoFromURL(src)
 			if err != nil {
-				if err == github.ErrDefaultBranchNotFound || err == github.ErrRateLimitExceeded {
-					log.Println(pkg.Name, err)
-					if repo != nil {
-						srcrepo = repo.String()
-					}
-					break
-				}
-				log.Println(pkg.Name, err)
 				continue
 			}
 			if repo != nil {
