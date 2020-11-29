@@ -31,41 +31,42 @@ var DefaultLabels = []string{"theme", "color scheme", "monokai"}
 // DefaultRequestsInterval número de requisições por segundo.
 const DefaultRequestsInterval = time.Second / 25
 
-type provider struct {
-	cli              *http.Client
-	labels           []string
-	requestsInterval time.Duration
-	tiker            *time.Ticker
+// Provider para Sublime Package Control.
+type Provider struct {
+	cli    *http.Client
+	labels []string
+	tiker  *time.Ticker
 }
+
+var _ theme.Provider = &Provider{}
 
 // NewProvider retorna um provedor de temas do Package Control.
 // Busca somente por pacotes que estejam nos labels informados.
-func NewProvider(labels []string) theme.Provider {
-	return &provider{
-		labels:           labels,
-		cli:              http.DefaultClient,
-		requestsInterval: DefaultRequestsInterval,
-		tiker:            time.NewTicker(DefaultRequestsInterval),
+func NewProvider(labels []string) *Provider {
+	return &Provider{
+		labels: labels,
+		cli:    http.DefaultClient,
+		tiker:  time.NewTicker(DefaultRequestsInterval),
 	}
 }
 
 // NewProviderWithClient retorna um provedor de temas do Package Control com o
 // cliente HTTP especificado. Busca somente pacotes que estejam nos labels informados.
 func NewProviderWithClient(labels []string, cli *http.Client) theme.Provider {
-	return &provider{
+	return &Provider{
 		labels: labels,
 		cli:    cli,
 	}
 }
 
-func (p *provider) SetRequestsInterval(interval time.Duration) {
-	p.requestsInterval = interval
-	p.tiker.Reset(p.requestsInterval)
+// SetRequestsInterval altera o intervalo de tempo entre cada requisição à API.
+func (p *Provider) SetRequestsInterval(interval time.Duration) {
+	p.tiker.Reset(interval)
 }
 
 // GetGallery retorna a galeria de temas.
 // Em caso de erro retorna erro e a galeria de melhor esforço.
-func (p *provider) GetGallery() (theme.Gallery, error) {
+func (p *Provider) GetGallery() (theme.Gallery, error) {
 	names, err := p.fetchPackagesNames()
 	if err != nil {
 		return nil, err
@@ -164,7 +165,7 @@ func parsePackageNames(r io.Reader) ([]string, error) {
 	return names, nil
 }
 
-func (p *provider) fetchPackagesNames() ([]string, error) {
+func (p *Provider) fetchPackagesNames() ([]string, error) {
 	if p.cli == nil {
 		return nil, errors.New("the http client must be specified")
 	}
@@ -174,35 +175,37 @@ func (p *provider) fetchPackagesNames() ([]string, error) {
 		mux   sync.Mutex
 	)
 
-	pkgnames := []string{}
+	var pkgnames []string
 
 	for _, label := range p.labels {
 		label := label
+		select {
+		case <-p.tiker.C:
+			group.Go(func() error {
+				log.Println("Fetching label:", label)
 
-		group.Go(func() error {
-			log.Println("Fetching label:", label)
+				resp, err := p.cli.Get(labelEndpoint + label + ".json")
+				if err != nil {
+					return err
+				}
+				defer resp.Body.Close()
 
-			resp, err := p.cli.Get(labelEndpoint + label + ".json")
-			if err != nil {
-				return err
-			}
-			defer resp.Body.Close()
+				if resp.StatusCode != http.StatusOK {
+					return fmt.Errorf("error on fetch packages for label %s", label)
+				}
 
-			if resp.StatusCode != http.StatusOK {
-				return errors.New("error on fetch packages for label" + label)
-			}
+				parsed, err := parsePackageNames(resp.Body)
+				if err != nil {
+					return err
+				}
 
-			parsed, err := parsePackageNames(resp.Body)
-			if err != nil {
-				return err
-			}
+				mux.Lock()
+				pkgnames = append(pkgnames, parsed...)
+				mux.Unlock()
 
-			mux.Lock()
-			pkgnames = append(pkgnames, parsed...)
-			mux.Unlock()
-
-			return nil
-		})
+				return nil
+			})
+		}
 	}
 
 	err := group.Wait()
@@ -213,7 +216,7 @@ func (p *provider) fetchPackagesNames() ([]string, error) {
 	return pkgnames, nil
 }
 
-func (p *provider) fetchPackages(pkgnames []string) ([]pkg, error) {
+func (p *Provider) fetchPackages(pkgnames []string) ([]pkg, error) {
 	if p.cli == nil {
 		return nil, errors.New("the http client must be specified")
 	}

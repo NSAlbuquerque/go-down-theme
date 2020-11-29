@@ -2,9 +2,7 @@ package pkgctrl
 
 import (
 	"bytes"
-	"encoding/json"
 	"io/ioutil"
-	"os"
 	"path"
 	"testing"
 
@@ -42,11 +40,11 @@ func Test_parsePackages(t *testing.T) {
 	t.Logf("%#v\n", pkg)
 }
 
-func TestProvider_fetchdata(t *testing.T) {
+func Test_Provider(t *testing.T) {
 	var err error
 	pknames := []string{}
 
-	p := NewProvider(DefaultLabels).(*provider)
+	p := NewProvider(DefaultLabels)
 
 	t.Run("Fetch package names", func(t *testing.T) {
 		pknames, err = p.fetchPackagesNames()
@@ -65,17 +63,6 @@ func TestProvider_fetchdata(t *testing.T) {
 		assert.NoError(t, err)
 
 		t.Logf("Fetched %d packages at %d", len(pkgs), len(pknames))
-
-		b := bytes.Buffer{}
-
-		enc := json.NewEncoder(&b)
-		enc.SetIndent("", "\t")
-
-		err = enc.Encode(pkgs)
-		assert.NoError(t, err)
-
-		err = ioutil.WriteFile(path.Join(".", "testdata", "packages.json"), b.Bytes(), os.ModePerm)
-		assert.NoError(t, err)
 	})
 }
 
@@ -88,6 +75,7 @@ func TestProvider_GetGalley(t *testing.T) {
 	assert.Less(t, 0, len(gallery))
 
 	for i, th := range gallery {
-		t.Logf("%d, - %#v", i+1, th)
+		assert.NotEmpty(t, th.Name)
+		t.Logf("%d, - %s: %s\n", i+1, th.Name, th.ProjectRepo)
 	}
 }
