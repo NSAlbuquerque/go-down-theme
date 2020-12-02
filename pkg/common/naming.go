@@ -2,6 +2,7 @@ package common
 
 import (
 	"crypto/md5"
+	"encoding/hex"
 	"strings"
 )
 
@@ -15,5 +16,5 @@ func ToFilemane(name string) (filename string) {
 // Hash retorna o hash MD5 de uma string.
 func Hash(s string) string {
 	sum := md5.Sum([]byte(s))
-	return string(sum[:])
+	return string(hex.EncodeToString(sum[:]))
 }

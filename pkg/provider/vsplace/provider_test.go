@@ -7,6 +7,7 @@ import (
 	"path"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -59,63 +60,68 @@ func TestPropertiesParse(t *testing.T) {
 	}
 
 	err := json.NewDecoder(strings.NewReader(jdata)).Decode(&data)
-	if err != nil {
-		t.Error(err)
-	}
+	assert.NoError(t, err)
 
-	t.Logf("%#v\n", data.Properties.toMap())
+	propMap := data.Properties.toMap()
+	assert.NotNil(t, propMap)
+
+	assert.Len(t, propMap, 9) // Número de propridades do JSON.
+
+	for prop, value := range propMap {
+		assert.NotEmpty(t, prop)
+		t.Logf("%s => %v\n", prop, value)
+	}
 }
 
-func TestParse(t *testing.T) {
+func TestParseExtensions(t *testing.T) {
 	data, err := ioutil.ReadFile(path.Join(".", "testdata", "response1.json"))
-	if err != nil {
-		t.Error(err)
-	}
+	assert.NoError(t, err)
 
-	extensions, total, err := parseExtensions(bytes.NewBuffer(data))
-	if err != nil {
-		t.Error(err)
-	}
+	p := NewProvider()
 
-	if len(extensions) == 0 {
-		t.Fail()
-	}
+	extensions, total, err := p.parseExtensions(bytes.NewBuffer(data))
+	assert.NoError(t, err)
+	assert.Equal(t, 3593, total)
 
-	if total < 0 {
-		t.Fail()
-	}
+	assert.Len(t, extensions, 54)
 
 	t.Logf("Total de temas: %d\n", total)
 
 	for i, ext := range extensions {
-		t.Logf("%d - %s", i, ext.DisplayName)
+		assert.NotEmpty(t, ext.Name)
+		assert.NotEmpty(t, ext.DisplayName)
+		t.Logf("%d - %s: %s", i, ext.Name, ext.DisplayName)
 	}
 }
 
 func TestProvider_fetchExtensions(t *testing.T) {
-	p := NewProvider().(*provider)
+	p := NewProvider()
 
 	extensions, err := p.fetchExtensions()
-	if err != nil {
-		t.Error(err)
-	}
+	assert.NoError(t, err)
+
+	assert.NotNil(t, extensions)
+	assert.Greater(t, len(extensions), 0)
 
 	t.Logf("Total de temas: %d\n", len(extensions))
 
 	for i, ext := range extensions {
+		assert.NotEmpty(t, ext.Name)
 		t.Logf("%d - %s [%s]", i, ext.DisplayName, ext.Publisher.DisplayName)
 	}
 }
 
 func TestProvider_GetGallery(t *testing.T) {
 	p := NewProvider()
+	p.SetRequestsInterval(500 * time.Millisecond)
 	gallery, err := p.GetGallery()
+
 	assert.NoError(t, err)
 
-	assert.Less(t, 0, len(gallery))
+	assert.Greater(t, len(gallery), 0)
 
-	for _, th := range gallery {
-		t.Logf("%#v", th)
+	for i, th := range gallery {
+		t.Logf("%d - %s: %s | %s", i, th.Name, th.Description, th.ProjectRepoID)
 	}
 
 }

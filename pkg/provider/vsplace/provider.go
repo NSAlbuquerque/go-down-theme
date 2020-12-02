@@ -5,10 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"math"
 	"net/http"
-	"net/http/httputil"
 	"strings"
 	"sync"
 	"time"
@@ -16,36 +14,68 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/albuquerq/go-down-theme/pkg/common"
-	"github.com/albuquerq/go-down-theme/pkg/provider/github"
 	"github.com/albuquerq/go-down-theme/pkg/theme"
+	"github.com/sirupsen/logrus"
 )
 
 const (
 	providerName       = "Visual Studio Marketplace"
 	extensionsEndpoint = "https://marketplace.visualstudio.com/_apis/public/gallery/extensionquery"
 
-	pgSize     = 100
-	reqAverage = 5
+	pgSize                  = 100
+	defaultRequestsInterval = time.Second / 5
 )
 
-type provider struct {
-	cli *http.Client
+type Provider struct {
+	cli    *http.Client
+	ticker *time.Ticker
+	logger *logrus.Entry
 }
 
+type ProviderOption func(*Provider)
+
 // NewProvider retorna um provedor de temas para
-func NewProvider() theme.Provider {
-	return &provider{
-		cli: http.DefaultClient,
+// o Visual Studio Marketplace.
+func NewProvider(options ...ProviderOption) *Provider {
+
+	p := &Provider{
+		ticker: time.NewTicker(defaultRequestsInterval),
+		logger: logrus.NewEntry(logrus.New()),
+		cli:    http.DefaultClient,
+	}
+
+	for _, opt := range options {
+		opt(p)
+	}
+	return p
+}
+
+// WithLogger com logger customizado.
+func WithLogger(logger *logrus.Entry) ProviderOption {
+	return func(p *Provider) {
+		p.logger = logger
 	}
 }
 
-func (p *provider) GetGallery() (theme.Gallery, error) {
+// WithHTTPClient com cliente HTTP customizado.
+func WithHTTPClient(cli *http.Client) ProviderOption {
+	return func(p *Provider) {
+		p.cli = cli
+	}
+}
+
+func (p *Provider) GetGallery() (theme.Gallery, error) {
+	log := p.operation("Provider.GetGallery")
+
 	exts, err := p.fetchExtensions()
 	if err != nil {
+		log.WithError(err).Println("error on fetch extensions")
 		return nil, err
 	}
 
 	var gallery theme.Gallery
+
+	log.Printf("feteched %d extensions", len(exts))
 
 	for _, ext := range exts {
 		version := ext.Versions[0]
@@ -67,16 +97,16 @@ func (p *provider) GetGallery() (theme.Gallery, error) {
 		branding := strings.ToLower(version.Properties.Get("Microsoft.VisualStudio.Services.Branding.Theme"))
 		t.Light = branding == "light"
 
-		if strings.Contains(t.ProjectRepo, "github") {
-			repo, err := github.RepoFromURL(t.ProjectRepo)
-			if err == nil {
-				t.Readme = repo.InferReadme()
-			}
-		}
-
 		gallery = append(gallery, t)
 	}
+
 	return gallery, nil
+}
+
+// SetRequestsInterval define o intervalo entre as requisições à
+// API do Visual Studio Marketplace.
+func (p *Provider) SetRequestsInterval(interval time.Duration) {
+	p.ticker.Reset(interval)
 }
 
 type extension struct {
@@ -167,18 +197,22 @@ const requestBodyFmt = `{
   "flags": 870
 }`
 
-func (p *provider) fetchExtensions() ([]extension, error) {
+func (p *Provider) fetchExtensions() ([]extension, error) {
+	log := p.operation("Provider.fetchExtensions")
 
 	extensions, total, err := p.fetchPageExtensions(1, pgSize)
 	if err != nil {
+		log.WithError(err).Println("error on fetch extensions page")
 		return nil, err
 	}
 
 	if total == 0 {
+		log.Warning("extensions not found")
 		return nil, nil
 	}
 
 	pages := int(math.Ceil(float64(total) / float64(pgSize)))
+	log.Printf("found %d extensions pages", pages)
 
 	var (
 		group errgroup.Group
@@ -186,31 +220,45 @@ func (p *provider) fetchExtensions() ([]extension, error) {
 	)
 
 	for pg := 2; pg <= pages; pg++ {
-		pg := pg
-		group.Go(func() error {
-			exts, _, err := p.fetchPageExtensions(pg, pgSize)
-			if err != nil {
-				return err
-			}
+		page := pg
 
-			mux.Lock()
-			extensions = append(extensions, exts...)
-			mux.Unlock()
+		select {
+		case <-p.ticker.C:
+			group.Go(func() error {
+				log.Printf("fetching extension page %d", page)
+				exts, _, err := p.fetchPageExtensions(page, pgSize)
+				if err != nil {
+					log.WithError(err).Printf("error on fetch page %d", page)
+					return err
+				}
 
-			return nil
-		})
-		time.Sleep(time.Second / reqAverage)
+				mux.Lock()
+				extensions = append(extensions, exts...)
+				mux.Unlock()
+
+				return nil
+			})
+		}
 	}
 
+	log.Println("all pages were fetched, waiting responses")
 	err = group.Wait()
 	if err != nil {
+		log.WithError(err).Println("error in some searched page")
 		return extensions, err
 	}
+	log.Println("all extensions were fetched")
 
 	return extensions, nil
 }
 
-func (p *provider) fetchPageExtensions(pg, pgSize int) ([]extension, int, error) {
+func (p *Provider) operation(op string) *logrus.Entry {
+	return p.logger.WithField("operation", op)
+}
+
+func (p *Provider) fetchPageExtensions(pg, pgSize int) ([]extension, int, error) {
+	log := p.operation("Provider.fetchPageExtensions")
+
 	if p.cli == nil {
 		return nil, -1, errors.New("http client not found")
 	}
@@ -230,25 +278,21 @@ func (p *provider) fetchPageExtensions(pg, pgSize int) ([]extension, int, error)
 
 	resp, err := p.cli.Do(req)
 	if err != nil {
-		log.Println("erro on fetch extensions", err)
+		log.WithError(err).Println("erro on fetch extensions")
+		return nil, -1, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		err := errors.New("error on fetch extensions")
+		log.WithError(err).Printf("error on get extensions; status code %d", resp.StatusCode)
 		return nil, -1, err
 	}
 
-	if resp.StatusCode != http.StatusOK {
-		data, err := httputil.DumpResponse(resp, true)
-		if err != nil {
-			log.Fatal(err)
-		}
-		log.Println(string(data))
-		log.Printf("error on get extensions, code %d", resp.StatusCode)
-		return nil, -1, errors.New("error on fetch extensions")
-	}
-
-	return parseExtensions(resp.Body)
+	return p.parseExtensions(resp.Body)
 }
 
-func parseExtensions(in io.Reader) ([]extension, int, error) {
-
+func (p *Provider) parseExtensions(in io.Reader) ([]extension, int, error) {
 	data := struct {
 		Results []struct {
 			Extensions []extension `json:"extensions"`
