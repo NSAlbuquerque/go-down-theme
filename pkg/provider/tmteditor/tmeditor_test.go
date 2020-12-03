@@ -3,6 +3,7 @@ package tmteditor
 import (
 	"bytes"
 	"io/ioutil"
+	"log"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -11,10 +12,17 @@ import (
 func TestProvider_GetGallery(t *testing.T) {
 	p := NewProvider()
 
+	assert.NotNil(t, p)
+	assert.NotNil(t, p.cli)
+	assert.NotNil(t, p.logger)
+
 	gallery, err := p.GetGallery()
-	if err != nil {
-		t.Error(err)
-	}
+	assert.NoError(t, err)
+
+	assert.NotNil(t, gallery)
+	assert.Greater(t, len(gallery), 0)
+
+	t.Logf("found %d themes", len(gallery))
 
 	for _, th := range gallery {
 		t.Logf("%#v", th)
@@ -28,11 +36,11 @@ func Test_parseEditorThemes(t *testing.T) {
 
 	themes, err := parseEditorThemes(bytes.NewBuffer(data))
 	assert.NoError(t, err)
-	assert.NotEqual(t, 0, len(themes))
-	assert.Less(t, 750, len(themes), "deve haver no minimo uns 750 temas na galeria")
+	assert.Equal(t, len(themes), 768)
 
+	log.Printf("parsed %d themes", len(themes))
 	for _, th := range themes {
-		assert.NotEmpty(t, th.Name, "o nome do tema é obrigatório")
-		assert.NotEmpty(t, th.URL, "o URL de download do tema é obrigatório")
+		assert.NotEmpty(t, th.Name, "the theme name is required")
+		assert.NotEmpty(t, th.URL, "the theme URL is required")
 	}
 }

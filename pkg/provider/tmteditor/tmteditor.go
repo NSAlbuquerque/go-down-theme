@@ -4,57 +4,82 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
-	"log"
 	"net/http"
 
 	"github.com/albuquerq/go-down-theme/pkg/common"
 	"github.com/albuquerq/go-down-theme/pkg/provider/github"
 	"github.com/albuquerq/go-down-theme/pkg/theme"
+	"github.com/sirupsen/logrus"
 )
-
-func init() {
-	log.Println("not implemented")
-}
 
 const (
 	providerName = "tmTheme-editor"
 	sourceURL    = "https://tmtheme-editor.herokuapp.com/gallery.json"
 )
 
-type provider struct {
-	cli *http.Client
+// Provider tmTheme-editor provider.
+type Provider struct {
+	cli    *http.Client
+	logger *logrus.Logger
 }
 
-// NewProvider retorna um provedor de temas para o tmTheme-editor.
-func NewProvider() theme.Provider {
-	return &provider{http.DefaultClient}
-}
+var _ theme.Provider = &Provider{}
 
-// NewProviderWithClient retorna um provedor de temas para o tmTheme-editor.
-// Com um cliente HTTP específico.
-func NewProviderWithClient(cli *http.Client) theme.Provider {
-	return &provider{cli}
-}
-
-func (p *provider) GetGallery() (theme.Gallery, error) {
-	if p.cli == nil {
-		return nil, errors.New("the http client must be specified")
+// NewProvider returns a theme provider for tmTheme-editor.
+func NewProvider(opts ...Option) *Provider {
+	p := &Provider{
+		cli:    http.DefaultClient,
+		logger: logrus.New(),
 	}
+	for _, opt := range opts {
+		opt(p)
+	}
+	return p
+}
+
+// Option apply option to provider.
+type Option func(p *Provider)
+
+// WithLogger returns a custom logger option.
+func WithLogger(logger *logrus.Logger) Option {
+	return func(p *Provider) {
+		p.logger = logger
+	}
+}
+
+// WithHTTPClient returns a custom HTTP client option.
+func WithHTTPClient(cli *http.Client) Option {
+	return func(p *Provider) {
+		p.cli = cli
+	}
+}
+
+// GetGallery returns the tmTheme-editor theme gallery.
+func (p *Provider) GetGallery() (theme.Gallery, error) {
+	log := p.operation("Provider.GetGallery")
+
 	resp, err := p.cli.Get(sourceURL)
 	if err != nil {
+		log.WithError(err).Println("error on fetch gallery resource")
 		return nil, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
+		log.WithField("statusCode", resp.StatusCode).Println("response status error")
 		return nil, errors.New("tm-theme-editor gallery not avaliable")
 	}
 
 	editorThemes, err := parseEditorThemes(resp.Body)
+	if err != nil {
+		log.WithError(err).Println("error on proccess response data")
+		return nil, err
+	}
 
 	total := len(editorThemes)
 
 	if total == 0 {
+		log.Println("themes not found")
 		return nil, errors.New("themes not found")
 	}
 
@@ -74,7 +99,6 @@ func (p *provider) GetGallery() (theme.Gallery, error) {
 		if err == nil {
 			th.ProjectRepo = repo.String()
 			th.ProjectRepoID = common.Hash(th.ProjectRepo)
-			th.Readme = repo.InferReadme()
 		} else {
 			log.Println("fail on get repo info:", err)
 		}
@@ -83,6 +107,10 @@ func (p *provider) GetGallery() (theme.Gallery, error) {
 	}
 
 	return gallery, nil
+}
+
+func (p *Provider) operation(operation string) *logrus.Entry {
+	return p.logger.WithField("operation", operation)
 }
 
 type editorTheme struct {
