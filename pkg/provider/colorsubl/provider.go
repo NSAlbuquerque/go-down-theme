@@ -8,6 +8,7 @@ import (
 	"github.com/albuquerq/go-down-theme/pkg/common"
 	"github.com/albuquerq/go-down-theme/pkg/provider/github"
 	"github.com/albuquerq/go-down-theme/pkg/theme"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -16,31 +17,46 @@ const (
 	themeFilePath = "https://raw.githubusercontent.com/Colorsublime/Colorsublime-Themes/master/themes/"
 )
 
-type provider struct {
-	cli *http.Client
+type Provider struct {
+	cli    *http.Client
+	logger *logrus.Logger
 }
 
 // NewProvider retorna um provedor de temas do ColorSublime.
-func NewProvider() theme.Provider {
-	return &provider{
-		cli: http.DefaultClient,
+func NewProvider(opts ...Option) *Provider {
+	p := &Provider{
+		cli:    http.DefaultClient,
+		logger: logrus.New(),
+	}
+	for _, opt := range opts {
+		opt(p)
+	}
+	return p
+}
+
+type Option func(*Provider)
+
+func WithLogger(logger *logrus.Logger) Option {
+	return func(p *Provider) {
+		p.logger = logger
 	}
 }
 
-// NewProviderWithClient retorna um provedor de temas do ColorSublime com um cliente HTTP específico.
-func NewProviderWithClient(cli *http.Client) theme.Provider {
-	return &provider{
-		cli: cli,
+func WithHTTPClient(cli *http.Client) Option {
+	return func(p *Provider) {
+		p.cli = cli
 	}
 }
 
-func (p *provider) GetGallery() (gallery theme.Gallery, err error) {
+func (p *Provider) GetGallery() (gallery theme.Gallery, err error) {
+	log := p.logger.WithField("operation", "Provider.GetGallery")
 	if p.cli == nil {
 		return nil, errors.New("the http client must be specified")
 	}
 
 	resp, err := p.cli.Get(galleryURL)
 	if err != nil {
+		log.WithError(err).Error("error on fetch http request")
 		return
 	}
 	defer resp.Body.Close()
@@ -54,6 +70,7 @@ func (p *provider) GetGallery() (gallery theme.Gallery, err error) {
 
 	err = json.NewDecoder(resp.Body).Decode(&themeData)
 	if err != nil {
+		log.WithError(err).Error("error on parse response body data")
 		return
 	}
 
@@ -61,6 +78,7 @@ func (p *provider) GetGallery() (gallery theme.Gallery, err error) {
 
 	repo, err := github.RepoFromURL(galleryURL)
 	if err != nil {
+		log.WithError(err).Error("error on parse github repository")
 		return nil, err
 	}
 
@@ -74,7 +92,6 @@ func (p *provider) GetGallery() (gallery theme.Gallery, err error) {
 			URL:           themeFilePath + td.FileName,
 			ProjectRepoID: common.Hash(repo.String()),
 			ProjectRepo:   repo.String(),
-			Readme:        repo.InferReadme(),
 		}
 
 		gallery = append(gallery, t)

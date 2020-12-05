@@ -25,7 +25,7 @@ func Test_ColorSublProvider_GetGallery(t *testing.T) {
 			gallery, err := tt.provider.GetGallery()
 			assert.NoError(t, err)
 
-			assert.NotEqual(t, 0, len(gallery))
+			assert.Greater(t, len(gallery), 0)
 			for _, theme := range gallery {
 				assert.NotEmpty(t, theme.URL)
 				t.Log(theme.Name, theme.URL)
