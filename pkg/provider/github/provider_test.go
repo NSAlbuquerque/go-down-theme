@@ -11,6 +11,12 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func init() {
+	accessToken = os.Getenv("GITHUB_ACCESS_TOKEN")
+}
+
+var accessToken string
+
 func TestGithubProvider_findInternalThemeFiles(t *testing.T) {
 	repo := Repo{
 		Branch: "master",
@@ -18,12 +24,9 @@ func TestGithubProvider_findInternalThemeFiles(t *testing.T) {
 		Name:   "TextMate-Themes",
 	}
 
-	p := NewProvider(&repo, "public_repo").(*provider)
+	p := NewProvider(&repo, WithToken(accessToken))
 
 	files, err := p.findInternalThemeFiles()
-	if err != nil {
-		t.Error(err)
-	}
 	assert.NoError(t, err)
 
 	assert.Equal(t, 155, len(files))
@@ -40,10 +43,11 @@ func TestGithubProvider_GetGallery(t *testing.T) {
 		Name:   "MonochromeSublimeText",
 	}
 
-	p := NewProvider(&repo, "public_repo").(*provider)
+	p := NewProvider(&repo, WithToken(accessToken))
 
 	gallery, err := p.GetGallery()
 	assert.NoError(t, err)
+	assert.Greater(t, len(gallery), 0)
 
 	for _, th := range gallery {
 

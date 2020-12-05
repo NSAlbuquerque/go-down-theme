@@ -3,3 +3,4 @@ downloads/
 temp/
 docs/
 go.sum
+.env

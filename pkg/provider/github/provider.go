@@ -6,48 +6,76 @@ import (
 	"fmt"
 	"math"
 	"net/http"
+	"net/url"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/albuquerq/go-down-theme/pkg/common"
 	"github.com/albuquerq/go-down-theme/pkg/theme"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 )
 
 const (
-	providerName      = "Github"
-	searchEndpointFmt = "https://api.github.com/search/code?q=+extension:.tmTheme+repo:%s/%s&page=%d&per_page=%d"
-	reqAverage        = 5 // Requisições por segundo.
+	providerName            = "Github"
+	searchEndpointFmt       = "https://api.github.com/search/code?"
+	defaultRequestsInterval = time.Minute / 10 // Intervalo entre as requisições.
 )
 
-type provider struct {
-	token string
-	repo  *Repo
-	cli   *http.Client
+type Provider struct {
+	token  string
+	repo   *Repo
+	cli    *http.Client
+	logger *logrus.Logger
+	ticker *time.Ticker
 }
 
-// NewProvider retorna um provedor de temas para um repositório do github.
-func NewProvider(repo *Repo, token string) theme.Provider {
-	return &provider{
-		repo: repo,
-		cli:  http.DefaultClient,
+// NewProvider returns a github theme provider.
+func NewProvider(repo *Repo, opts ...Option) *Provider {
+	p := &Provider{
+		repo:   repo,
+		cli:    http.DefaultClient,
+		logger: logrus.New(),
+		ticker: time.NewTicker(defaultRequestsInterval),
+	}
+
+	for _, opt := range opts {
+		opt(p)
+	}
+	return p
+}
+
+type Option func(p *Provider)
+
+func WithToken(token string) Option {
+	return func(p *Provider) {
+		p.token = token
 	}
 }
 
-// NewProviderWithClient retorna um provedor de temas para um repositório do github.
-// Com um cliente HTTP específico.
-func NewProviderWithClient(repo *Repo, token string, cli *http.Client) theme.Provider {
-	return &provider{
-		repo: repo,
-		cli:  cli,
+func WithLogger(logger *logrus.Logger) Option {
+	return func(p *Provider) {
+		p.logger = logger
 	}
 }
 
-func (p *provider) GetGallery() (theme.Gallery, error) {
+func WithHTTPClient(cli *http.Client) Option {
+	return func(p *Provider) {
+		p.cli = cli
+	}
+}
 
+func (p *Provider) SetRequestInterval(interval time.Duration) {
+	p.ticker.Reset(interval)
+}
+
+func (p *Provider) GetGallery() (theme.Gallery, error) {
+	log := p.operation("Provider.GetGallery")
 	files, err := p.findInternalThemeFiles()
 	if err != nil {
+		log.WithError(err).Println("themes not found")
 		return nil, err
 	}
 
@@ -61,7 +89,6 @@ func (p *provider) GetGallery() (theme.Gallery, error) {
 			ProjectRepoID: common.Hash(p.repo.String()),
 			ProjectRepo:   p.repo.String(),
 			URL:           f.DownloadURL,
-			Readme:        p.repo.InferReadme(),
 		}
 
 		gallery = append(gallery, t)
@@ -70,80 +97,93 @@ func (p *provider) GetGallery() (theme.Gallery, error) {
 	return gallery, nil
 }
 
-func (p *provider) findInternalThemeFiles() ([]File, error) {
+func (p *Provider) operation(operation string) *logrus.Entry {
+	return p.logger.WithField("operation", operation)
+}
 
+func (p *Provider) findInternalThemeFiles() ([]File, error) {
+	log := p.operation("Provider.findInternalThemeFiles")
 	var (
-		page    = 1
-		perPage = 100
-		pages   = 0
+		pg    = 1
+		perPg = 100
+		pgs   = 0
 	)
 
-	total, files, err := p.fetch(page, perPage)
+	total, files, err := p.fetch(pg, perPg)
 	if err != nil || total == 0 {
+		log.WithField("total", total).WithError(err).Println("request error")
 		return nil, err
 	}
 
-	if total > perPage {
-		pages = int(math.Ceil(float64(total) / float64(perPage)))
+	if total > perPg {
+		pgs = int(math.Ceil(float64(total) / float64(perPg)))
 	}
 
 	group := errgroup.Group{}
 	mux := sync.Mutex{}
 
-	for page = 2; page <= pages; page++ {
-
-		page := page
-
-		group.Go(func() error {
-			_, pageFiles, err := p.fetch(page, perPage)
-			if err != nil {
-				return err
-			}
-			mux.Lock()
-			files = append(files, pageFiles...)
-			mux.Unlock()
-			return nil
-		})
-
-		time.Sleep(time.Second / reqAverage)
+	for pg = 2; pg <= pgs; pg++ {
+		page := pg
+		select {
+		case <-p.ticker.C:
+			group.Go(func() error {
+				_, pageFiles, err := p.fetch(page, perPg)
+				if err != nil {
+					p.logger.WithError(err).Printf("erro on fetch page %d", page)
+					return err
+				}
+				mux.Lock()
+				files = append(files, pageFiles...)
+				mux.Unlock()
+				return nil
+			})
+		}
 	}
 
 	err = group.Wait()
 	if err != nil {
+		log.WithError(err).Println("error in some request")
 		return nil, err
 	}
 	return files, nil
 }
 
-func (p *provider) fetch(page, perPage int) (total int, files []File, err error) {
+func (p *Provider) fetch(page, perPage int) (total int, files []File, err error) {
+	log := p.operation("Provider.fetch")
 	if p.cli == nil {
 		err = errors.New("the http client must be specified")
 		return
 	}
-	var endpoint = fmt.Sprintf(
-		searchEndpointFmt,
-		p.repo.Owner,
-		p.repo.Name,
-		page,
-		perPage,
-	)
+
+	query := make(url.Values)
+	query.Set("q", fmt.Sprintf("repo:%s/%s extension:tmTheme", p.repo.Owner, p.repo.Name))
+	query.Set("page", strconv.Itoa(page))
+	query.Set("per_page", strconv.Itoa(perPage))
+
+	endpoint := searchEndpointFmt + query.Encode()
+
+	log.Printf("processing %s URL", endpoint)
 
 	req, err := http.NewRequest(http.MethodGet, endpoint, nil)
 	if err != nil {
+		log.WithError(err).Error("erro on prepare request")
 		return
 	}
 
+	req.Header.Set("accept", "application/vnd.github.v3+json")
 	if p.token != "" {
-		req.Header.Add("Authorization", "token "+p.token)
+		req.Header.Set("Authorization", fmt.Sprintf("token %s", p.token))
 	}
 
 	resp, err := p.cli.Do(req)
 	if err != nil {
+		log.WithError(err).WithField("code", resp.StatusCode).Println("request error")
 		return
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
+		log.WithField("statusCode", resp.StatusCode).WithField("url", endpoint).Error("request error")
 		err = errors.New("error on perform search request")
 		return
 	}
@@ -159,6 +199,7 @@ func (p *provider) fetch(page, perPage int) (total int, files []File, err error)
 
 	err = json.NewDecoder(resp.Body).Decode(&searchResult)
 	if err != nil {
+		log.WithError(err).Error("error on decode response body")
 		return
 	}
 
