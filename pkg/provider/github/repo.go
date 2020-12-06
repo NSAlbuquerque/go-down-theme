@@ -21,7 +21,7 @@ var (
 	ErrNoGithubRepository    = errors.New("it is not github repository")
 )
 
-// Repo representa um repositório do github.
+// Repo represents a github project repository.
 type Repo struct {
 	Name    string `json:"name"`
 	Owner   string `json:"owner"`
@@ -33,7 +33,7 @@ func (r Repo) String() string {
 	return fmt.Sprintf("https://github.com/%s/%s", r.Owner, r.Name)
 }
 
-// LoadLicenseAndBranch consulta o branch default a partir da API do github e o atribui ao repositório.
+// LoadLicenseAndBranch queries the main branch of the project.
 func (r *Repo) LoadLicenseAndBranch() error {
 	if r.Branch != "" {
 		return nil
@@ -85,8 +85,8 @@ func (r *Repo) fetchRepoData() (*apiResponseType, error) {
 	return &repoData, nil
 }
 
-// InferReadme retorna o endereço mais provável do arquivo README.md do repositório.
-// A existência do endereço não é verificada, ele pode ser um endereço inválido.
+// InferReadme returns the likely path to the README file.
+// Do not check for the existence of the file.
 func (r Repo) InferReadme() string {
 	err := r.LoadLicenseAndBranch()
 	if err != nil {
@@ -101,8 +101,7 @@ type File struct {
 	DownloadURL string
 }
 
-// RepoFromURL retorna um repositório a partir
-// de um URL do github.
+// RepoFromURL returns a repository from its URL.
 func RepoFromURL(addr string) (*Repo, error) {
 	if !strings.Contains(addr, "github.com") &&
 		!strings.Contains(addr, "githubusercontent.com") {

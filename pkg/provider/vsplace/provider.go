@@ -26,17 +26,19 @@ const (
 	defaultRequestsInterval = time.Second / 5
 )
 
+// Provider represents a theme provider
+// to the Visual Studio Marketplace.
 type Provider struct {
 	cli    *http.Client
 	ticker *time.Ticker
 	logger *logrus.Entry
 }
 
-type ProviderOption func(*Provider)
+// Option applies option to the provider.
+type Option func(*Provider)
 
-// NewProvider retorna um provedor de temas para
-// o Visual Studio Marketplace.
-func NewProvider(options ...ProviderOption) *Provider {
+// NewProvider return a theme provider to the Visual Studio Marketplace.
+func NewProvider(options ...Option) *Provider {
 
 	p := &Provider{
 		ticker: time.NewTicker(defaultRequestsInterval),
@@ -50,20 +52,22 @@ func NewProvider(options ...ProviderOption) *Provider {
 	return p
 }
 
-// WithLogger com logger customizado.
-func WithLogger(logger *logrus.Entry) ProviderOption {
+// WithLogger applies a custom logger to the provider.
+func WithLogger(logger *logrus.Entry) Option {
 	return func(p *Provider) {
 		p.logger = logger
 	}
 }
 
-// WithHTTPClient com cliente HTTP customizado.
-func WithHTTPClient(cli *http.Client) ProviderOption {
+// WithHTTPClient applies a custom HTTP client to the
+// theme provider.
+func WithHTTPClient(cli *http.Client) Option {
 	return func(p *Provider) {
 		p.cli = cli
 	}
 }
 
+// GetGallery returns the theme gallery.
 func (p *Provider) GetGallery() (theme.Gallery, error) {
 	log := p.operation("Provider.GetGallery")
 
@@ -103,8 +107,8 @@ func (p *Provider) GetGallery() (theme.Gallery, error) {
 	return gallery, nil
 }
 
-// SetRequestsInterval define o intervalo entre as requisições à
-// API do Visual Studio Marketplace.
+// SetRequestsInterval sets the interval between requests for
+// the Visual Studio Marketplace API.
 func (p *Provider) SetRequestsInterval(interval time.Duration) {
 	p.ticker.Reset(interval)
 }

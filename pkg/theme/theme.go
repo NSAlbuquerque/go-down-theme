@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-// Theme metainformações sobre temas
+// Theme represents metadata about a theme.
 type Theme struct {
 	ID          string `json:"id"`
 	Name        string `json:"name"`
@@ -23,10 +23,10 @@ type Theme struct {
 	LastUpdate    time.Time `json:"updatedAt,omitempty"`
 }
 
-// Gallery representa um conjunto de metainformações sobre temas.
+// Gallery represents a collection of themes.
 type Gallery []Theme
 
-// Provider disponibiliza metainformações sobre temas a partir de uma fonte.
+// Provider seeks theme metadata from a source.
 type Provider interface {
 	GetGallery() (Gallery, error)
 }

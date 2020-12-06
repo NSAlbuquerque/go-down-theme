@@ -47,30 +47,37 @@ func NewProvider(repo *Repo, opts ...Option) *Provider {
 	return p
 }
 
+// Option applies options to the theme provider.
 type Option func(p *Provider)
 
+// WithToken applies the github auth token to the theme provider.
 func WithToken(token string) Option {
 	return func(p *Provider) {
 		p.token = token
 	}
 }
 
+// WithLogger applies custom logger to the theme provider.
 func WithLogger(logger *logrus.Logger) Option {
 	return func(p *Provider) {
 		p.logger = logger
 	}
 }
 
+// WithHTTPClient applies custom HTTP client to
+// the theme provider.
 func WithHTTPClient(cli *http.Client) Option {
 	return func(p *Provider) {
 		p.cli = cli
 	}
 }
 
+// SetRequestInterval sets the interval between requests.
 func (p *Provider) SetRequestInterval(interval time.Duration) {
 	p.ticker.Reset(interval)
 }
 
+// GetGallery return the theme gallery.
 func (p *Provider) GetGallery() (theme.Gallery, error) {
 	log := p.operation("Provider.GetGallery")
 	files, err := p.findInternalThemeFiles()
