@@ -1,4 +1,4 @@
-// Package pkgctrl implementa um provedor de temas para o Sublime Package Control (https://packagecontrol.io).
+// Package pkgctrl implements a theme provider for Sublime Package Control (https://packagecontrol.io).
 package pkgctrl
 
 import (
@@ -6,8 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"sync"
@@ -18,6 +18,7 @@ import (
 	"github.com/albuquerq/go-down-theme/pkg/common"
 	"github.com/albuquerq/go-down-theme/pkg/provider/github"
 	"github.com/albuquerq/go-down-theme/pkg/theme"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -26,41 +27,52 @@ const (
 	packageEndpoint = "https://packagecontrol.io/packages/"
 )
 
-// DefaultLabels labels com temas no Sublime Package Control.
+// DefaultLabels labels for themes in Sublime Package Control.
 var DefaultLabels = []string{"theme", "color scheme", "monokai"}
 
-// DefaultRequestsInterval número de requisições por segundo.
-const DefaultRequestsInterval = time.Second / 25
+// defaultRequestsInterval interval between HTTP requests.
+const defaultRequestsInterval = time.Second / 25
 
 // Provider para Sublime Package Control.
 type Provider struct {
-	cli    *http.Client
 	labels []string
+	cli    *http.Client
 	tiker  *time.Ticker
+	logger *logrus.Logger
 }
 
 var _ theme.Provider = &Provider{}
 
-// NewProvider retorna um provedor de temas do Package Control.
-// Busca somente por pacotes que estejam nos labels informados.
-func NewProvider(labels []string) *Provider {
-	return &Provider{
+// NewProvider returns a provider for the Package Control.
+// Search only in the informed labels.
+func NewProvider(labels []string, opts ...Option) *Provider {
+	p := &Provider{
 		labels: labels,
 		cli:    http.DefaultClient,
-		tiker:  time.NewTicker(DefaultRequestsInterval),
+		tiker:  time.NewTicker(defaultRequestsInterval),
+		logger: logrus.New(),
+	}
+	for _, opt := range opts {
+		opt(p)
+	}
+	return p
+}
+
+type Option func(p *Provider)
+
+func WithHTTPClient(cli *http.Client) Option {
+	return func(p *Provider) {
+		p.cli = cli
 	}
 }
 
-// NewProviderWithClient retorna um provedor de temas do Package Control com o
-// cliente HTTP especificado. Busca somente pacotes que estejam nos labels informados.
-func NewProviderWithClient(labels []string, cli *http.Client) theme.Provider {
-	return &Provider{
-		labels: labels,
-		cli:    cli,
+func WithLogger(logger *logrus.Logger) Option {
+	return func(p *Provider) {
+		p.logger = logger
 	}
 }
 
-// SetRequestsInterval altera o intervalo de tempo entre cada requisição à API.
+// SetRequestsInterval sets the interval between requests.
 func (p *Provider) SetRequestsInterval(interval time.Duration) {
 	p.tiker.Reset(interval)
 }
@@ -68,13 +80,16 @@ func (p *Provider) SetRequestsInterval(interval time.Duration) {
 // GetGallery retorna a galeria de temas.
 // Em caso de erro retorna erro e a galeria de melhor esforço.
 func (p *Provider) GetGallery() (theme.Gallery, error) {
+	log := p.operation("Provider.GetGallery")
 	names, err := p.fetchPackagesNames()
 	if err != nil {
+		log.WithError(err).Error("error on fetch package names")
 		return nil, err
 	}
 
 	pkgs, err := p.fetchPackages(names)
 	if err != nil {
+		log.WithError(err).Error("error on fetch packages")
 		return nil, err
 	}
 
@@ -118,6 +133,10 @@ func (p *Provider) GetGallery() (theme.Gallery, error) {
 		gallery = append(gallery, th)
 	}
 	return gallery, nil
+}
+
+func (p *Provider) operation(operation string) *logrus.Entry {
+	return p.logger.WithField("operation", operation)
 }
 
 type pkg struct {
@@ -168,6 +187,7 @@ func parsePackageNames(r io.Reader) ([]string, error) {
 }
 
 func (p *Provider) fetchPackagesNames() ([]string, error) {
+	log := p.operation("Provider.fetchPakcagesNames")
 	if p.cli == nil {
 		return nil, errors.New("the http client must be specified")
 	}
@@ -184,20 +204,23 @@ func (p *Provider) fetchPackagesNames() ([]string, error) {
 		select {
 		case <-p.tiker.C:
 			group.Go(func() error {
-				log.Println("Fetching label:", label)
+				log.WithField("label", label).Print("fetching label")
 
-				resp, err := p.cli.Get(labelEndpoint + label + ".json")
+				resp, err := p.cli.Get(labelEndpoint + url.PathEscape(label) + ".json")
 				if err != nil {
+					log.WithError(err).WithField("label", label).Error("error on request label")
 					return err
 				}
 				defer resp.Body.Close()
 
 				if resp.StatusCode != http.StatusOK {
+					log.WithField("statusCode", resp.StatusCode).Error("respose status error")
 					return fmt.Errorf("error on fetch packages for label %s", label)
 				}
 
 				parsed, err := parsePackageNames(resp.Body)
 				if err != nil {
+					log.WithError(err).Error("error on parse package names")
 					return err
 				}
 
@@ -219,6 +242,7 @@ func (p *Provider) fetchPackagesNames() ([]string, error) {
 }
 
 func (p *Provider) fetchPackages(pkgnames []string) ([]pkg, error) {
+	log := p.operation("Provider.fetchPackages")
 	if p.cli == nil {
 		return nil, errors.New("the http client must be specified")
 	}
@@ -236,8 +260,9 @@ func (p *Provider) fetchPackages(pkgnames []string) ([]pkg, error) {
 		select {
 		case <-p.tiker.C:
 			group.Go(func() error {
-				resp, err := p.cli.Get(packageEndpoint + pkname + ".json")
+				resp, err := p.cli.Get(packageEndpoint + url.PathEscape(pkname) + ".json")
 				if err != nil {
+					log.WithError(err).WithField("package", pkname).Error("error on request package")
 					return nil
 				}
 				defer resp.Body.Close()
@@ -254,16 +279,17 @@ func (p *Provider) fetchPackages(pkgnames []string) ([]pkg, error) {
 						mux.Unlock()
 						return nil
 					}
-
 					return fmt.Errorf("erro on get the %s package", pkname)
 				}
 
 				if resp.Header.Get("content-type") != "application/json" {
+					log.Error("response data format not accepted")
 					return fmt.Errorf("not json data returned for the %s package", pkname)
 				}
 
 				pk, err := parsePackage(resp.Body)
 				if err != nil {
+					log.WithError(err).Error("error on parse packages from response body")
 					return err
 				}
 
