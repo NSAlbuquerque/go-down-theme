@@ -8,7 +8,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/albuquerq/go-down-theme/pkg/common"
-	"github.com/albuquerq/go-down-theme/pkg/provider/github"
+	"github.com/albuquerq/go-down-theme/pkg/providers/github"
 	"github.com/albuquerq/go-down-theme/pkg/theme"
 )
 

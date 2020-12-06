@@ -7,7 +7,7 @@ import (
 	"net/http"
 
 	"github.com/albuquerq/go-down-theme/pkg/common"
-	"github.com/albuquerq/go-down-theme/pkg/provider/github"
+	"github.com/albuquerq/go-down-theme/pkg/providers/github"
 	"github.com/albuquerq/go-down-theme/pkg/theme"
 	"github.com/sirupsen/logrus"
 )
