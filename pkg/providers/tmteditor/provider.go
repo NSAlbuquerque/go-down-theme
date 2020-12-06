@@ -6,10 +6,11 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/albuquerq/go-down-theme/pkg/common"
-	"github.com/albuquerq/go-down-theme/pkg/providers/github"
-	"github.com/albuquerq/go-down-theme/pkg/theme"
 	"github.com/sirupsen/logrus"
+
+	"github.com/albuquerq/go-down-theme/pkg/common"
+	"github.com/albuquerq/go-down-theme/pkg/domain/themes"
+	"github.com/albuquerq/go-down-theme/pkg/providers/github"
 )
 
 const (
@@ -23,7 +24,7 @@ type Provider struct {
 	logger *logrus.Logger
 }
 
-var _ theme.Provider = &Provider{}
+var _ themes.Provider = &Provider{}
 
 // NewProvider returns a theme provider for tmTheme-editor.
 func NewProvider(opts ...Option) *Provider {
@@ -55,7 +56,7 @@ func WithHTTPClient(cli *http.Client) Option {
 }
 
 // GetGallery returns the tmTheme-editor theme gallery.
-func (p *Provider) GetGallery() (theme.Gallery, error) {
+func (p *Provider) GetGallery() (themes.Gallery, error) {
 	log := p.operation("Provider.GetGallery")
 
 	resp, err := p.cli.Get(sourceURL)
@@ -83,11 +84,11 @@ func (p *Provider) GetGallery() (theme.Gallery, error) {
 		return nil, errors.New("themes not found")
 	}
 
-	gallery := make(theme.Gallery, 0, total)
+	gallery := make(themes.Gallery, 0, total)
 
 	for _, tmtTheme := range editorThemes {
 
-		th := theme.Theme{
+		th := themes.Theme{
 			Name:     tmtTheme.Name,
 			Provider: providerName,
 			Author:   tmtTheme.Author,

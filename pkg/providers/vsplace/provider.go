@@ -14,7 +14,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/albuquerq/go-down-theme/pkg/common"
-	"github.com/albuquerq/go-down-theme/pkg/theme"
+	"github.com/albuquerq/go-down-theme/pkg/domain/themes"
 	"github.com/sirupsen/logrus"
 )
 
@@ -25,6 +25,8 @@ const (
 	pgSize                  = 100
 	defaultRequestsInterval = time.Second / 5
 )
+
+var _ themes.Provider = &Provider{}
 
 // Provider represents a theme provider
 // to the Visual Studio Marketplace.
@@ -68,7 +70,7 @@ func WithHTTPClient(cli *http.Client) Option {
 }
 
 // GetGallery returns the theme gallery.
-func (p *Provider) GetGallery() (theme.Gallery, error) {
+func (p *Provider) GetGallery() (themes.Gallery, error) {
 	log := p.operation("Provider.GetGallery")
 
 	exts, err := p.fetchExtensions()
@@ -77,7 +79,7 @@ func (p *Provider) GetGallery() (theme.Gallery, error) {
 		return nil, err
 	}
 
-	var gallery theme.Gallery
+	var gallery themes.Gallery
 
 	log.Printf("feteched %d extensions", len(exts))
 
@@ -86,7 +88,7 @@ func (p *Provider) GetGallery() (theme.Gallery, error) {
 
 		repo := version.Properties.Get("Microsoft.VisualStudio.Services.Links.Source")
 
-		t := theme.Theme{
+		t := themes.Theme{
 			Author:        ext.Publisher.Name,
 			Provider:      providerName,
 			Version:       version.Version,

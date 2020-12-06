@@ -12,10 +12,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/albuquerq/go-down-theme/pkg/common"
-	"github.com/albuquerq/go-down-theme/pkg/theme"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
+
+	"github.com/albuquerq/go-down-theme/pkg/common"
+	"github.com/albuquerq/go-down-theme/pkg/domain/themes"
 )
 
 const (
@@ -78,7 +79,7 @@ func (p *Provider) SetRequestInterval(interval time.Duration) {
 }
 
 // GetGallery return the theme gallery.
-func (p *Provider) GetGallery() (theme.Gallery, error) {
+func (p *Provider) GetGallery() (themes.Gallery, error) {
 	log := p.operation("Provider.GetGallery")
 	files, err := p.findInternalThemeFiles()
 	if err != nil {
@@ -86,10 +87,10 @@ func (p *Provider) GetGallery() (theme.Gallery, error) {
 		return nil, err
 	}
 
-	gallery := make(theme.Gallery, 0, len(files))
+	gallery := make(themes.Gallery, 0, len(files))
 
 	for _, f := range files {
-		t := theme.Theme{
+		t := themes.Theme{
 			Name:          f.Name,
 			Author:        p.repo.Owner,
 			Provider:      providerName,

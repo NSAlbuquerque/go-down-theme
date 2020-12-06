@@ -13,12 +13,12 @@ import (
 	"sync"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/albuquerq/go-down-theme/pkg/common"
+	"github.com/albuquerq/go-down-theme/pkg/domain/themes"
 	"github.com/albuquerq/go-down-theme/pkg/providers/github"
-	"github.com/albuquerq/go-down-theme/pkg/theme"
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -41,7 +41,7 @@ type Provider struct {
 	logger *logrus.Logger
 }
 
-var _ theme.Provider = &Provider{}
+var _ themes.Provider = &Provider{}
 
 // NewProvider returns a provider for the Package Control.
 // Search only in the informed labels.
@@ -79,7 +79,7 @@ func (p *Provider) SetRequestsInterval(interval time.Duration) {
 
 // GetGallery retorna a galeria de temas.
 // Em caso de erro retorna erro e a galeria de melhor esforço.
-func (p *Provider) GetGallery() (theme.Gallery, error) {
+func (p *Provider) GetGallery() (themes.Gallery, error) {
 	log := p.operation("Provider.GetGallery")
 	names, err := p.fetchPackagesNames()
 	if err != nil {
@@ -93,7 +93,7 @@ func (p *Provider) GetGallery() (theme.Gallery, error) {
 		return nil, err
 	}
 
-	var gallery theme.Gallery
+	var gallery themes.Gallery
 
 	for _, pkg := range pkgs {
 
@@ -115,7 +115,7 @@ func (p *Provider) GetGallery() (theme.Gallery, error) {
 			}
 		}
 
-		th := theme.Theme{
+		th := themes.Theme{
 			Name:          pkg.Name,
 			Description:   pkg.Description,
 			Author:        strings.Join(pkg.Authors, ", "),

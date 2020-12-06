@@ -8,8 +8,8 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/albuquerq/go-down-theme/pkg/common"
+	"github.com/albuquerq/go-down-theme/pkg/domain/themes"
 	"github.com/albuquerq/go-down-theme/pkg/providers/github"
-	"github.com/albuquerq/go-down-theme/pkg/theme"
 )
 
 const (
@@ -18,6 +18,9 @@ const (
 	themeFilePath = "https://raw.githubusercontent.com/Colorsublime/Colorsublime-Themes/master/themes/"
 )
 
+var _ themes.Provider = &Provider{}
+
+// Provider for color sublime project.
 type Provider struct {
 	cli    *http.Client
 	logger *logrus.Logger
@@ -53,7 +56,7 @@ func WithHTTPClient(cli *http.Client) Option {
 }
 
 // GetGallery returns the gallery of themes of color sublime project.
-func (p *Provider) GetGallery() (gallery theme.Gallery, err error) {
+func (p *Provider) GetGallery() (gallery themes.Gallery, err error) {
 	log := p.logger.WithField("operation", "Provider.GetGallery")
 	if p.cli == nil {
 		return nil, errors.New("the http client must be specified")
@@ -79,7 +82,7 @@ func (p *Provider) GetGallery() (gallery theme.Gallery, err error) {
 		return
 	}
 
-	gallery = make(theme.Gallery, 0, len(themeData))
+	gallery = make(themes.Gallery, 0, len(themeData))
 
 	repo, err := github.RepoFromURL(galleryURL)
 	if err != nil {
@@ -89,7 +92,7 @@ func (p *Provider) GetGallery() (gallery theme.Gallery, err error) {
 
 	for _, td := range themeData {
 
-		t := theme.Theme{
+		t := themes.Theme{
 			Name:          td.Title,
 			Author:        td.Author,
 			Description:   td.Description,
