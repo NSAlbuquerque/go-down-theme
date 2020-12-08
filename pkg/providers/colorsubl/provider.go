@@ -13,7 +13,9 @@ import (
 )
 
 const (
-	providerName  = "Color Sublime"
+	// Name of provider.
+	Name themes.ProviderName = "Color Sublime"
+
 	galleryURL    = "https://raw.githubusercontent.com/Colorsublime/Colorsublime-Themes/master/themes.json"
 	themeFilePath = "https://raw.githubusercontent.com/Colorsublime/Colorsublime-Themes/master/themes/"
 )
@@ -96,7 +98,7 @@ func (p *Provider) GetGallery() (gallery themes.Gallery, err error) {
 			Name:          td.Title,
 			Author:        td.Author,
 			Description:   td.Description,
-			Provider:      providerName,
+			Provider:      Name,
 			URL:           themeFilePath + td.FileName,
 			ProjectRepoID: common.Hash(repo.String()),
 			ProjectRepo:   repo.String(),

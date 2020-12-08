@@ -4,6 +4,9 @@ import (
 	"time"
 )
 
+// ProviderName type.
+type ProviderName string
+
 // Theme represents metadata about a theme.
 type Theme struct {
 	ID          string `json:"id"`
@@ -15,12 +18,12 @@ type Theme struct {
 	Light       bool   `json:"light"`
 	Version     string `json:"version,omitempty"`
 
-	ProjectRepoID string    `json:"projectRepoId"`
-	ProjectRepo   string    `json:"projectRepo"`
-	Readme        string    `json:"readme"`
-	License       string    `json:"license,omitempty"`
-	Provider      string    `json:"provider,omitempty"`
-	LastUpdate    time.Time `json:"updatedAt,omitempty"`
+	ProjectRepoID string       `json:"projectRepoId"`
+	ProjectRepo   string       `json:"projectRepo"`
+	Readme        string       `json:"readme"`
+	License       string       `json:"license,omitempty"`
+	Provider      ProviderName `json:"provider,omitempty"`
+	LastUpdate    time.Time    `json:"updatedAt,omitempty"`
 }
 
 // Gallery represents a collection of themes.

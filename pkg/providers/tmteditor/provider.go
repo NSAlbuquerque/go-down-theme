@@ -14,8 +14,10 @@ import (
 )
 
 const (
-	providerName = "tmTheme-editor"
-	sourceURL    = "https://tmtheme-editor.herokuapp.com/gallery.json"
+	// Name of provider.
+	Name themes.ProviderName = "tmTheme-editor"
+
+	sourceURL = "https://tmtheme-editor.herokuapp.com/gallery.json"
 )
 
 // Provider tmTheme-editor provider.
@@ -90,7 +92,7 @@ func (p *Provider) GetGallery() (themes.Gallery, error) {
 
 		th := themes.Theme{
 			Name:     tmtTheme.Name,
-			Provider: providerName,
+			Provider: Name,
 			Author:   tmtTheme.Author,
 			Light:    tmtTheme.Light,
 			URL:      tmtTheme.URL,

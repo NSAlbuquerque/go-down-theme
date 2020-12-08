@@ -22,7 +22,9 @@ import (
 )
 
 const (
-	providerName    = "Package Control"
+	// Name of provider.
+	Name themes.ProviderName = "Package Control"
+
 	labelEndpoint   = "https://packagecontrol.io/browse/labels/"
 	packageEndpoint = "https://packagecontrol.io/packages/"
 )
@@ -119,7 +121,7 @@ func (p *Provider) GetGallery() (themes.Gallery, error) {
 			Name:          pkg.Name,
 			Description:   pkg.Description,
 			Author:        strings.Join(pkg.Authors, ", "),
-			Provider:      providerName,
+			Provider:      Name,
 			Readme:        pkg.Readme,
 			ProjectRepoID: common.Hash(srcrepo),
 			ProjectRepo:   srcrepo,

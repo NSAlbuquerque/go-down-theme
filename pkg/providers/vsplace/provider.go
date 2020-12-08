@@ -19,7 +19,9 @@ import (
 )
 
 const (
-	providerName       = "Visual Studio Marketplace"
+	// Name of provider.
+	Name themes.ProviderName = "Visual Studio Marketplace"
+
 	extensionsEndpoint = "https://marketplace.visualstudio.com/_apis/public/gallery/extensionquery"
 
 	pgSize                  = 100
@@ -90,7 +92,7 @@ func (p *Provider) GetGallery() (themes.Gallery, error) {
 
 		t := themes.Theme{
 			Author:        ext.Publisher.Name,
-			Provider:      providerName,
+			Provider:      Name,
 			Version:       version.Version,
 			Name:          ext.DisplayName,
 			Description:   ext.Description,

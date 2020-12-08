@@ -20,7 +20,9 @@ import (
 )
 
 const (
-	providerName            = "Github"
+	// Name of provider.
+	Name themes.ProviderName = "Github"
+
 	searchEndpointFmt       = "https://api.github.com/search/code?"
 	defaultRequestsInterval = time.Minute / 10 // Intervalo entre as requisições.
 )
@@ -93,7 +95,7 @@ func (p *Provider) GetGallery() (themes.Gallery, error) {
 		t := themes.Theme{
 			Name:          f.Name,
 			Author:        p.repo.Owner,
-			Provider:      providerName,
+			Provider:      Name,
 			ProjectRepoID: common.Hash(p.repo.String()),
 			ProjectRepo:   p.repo.String(),
 			URL:           f.DownloadURL,
