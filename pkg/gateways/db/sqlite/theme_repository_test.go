@@ -69,13 +69,35 @@ func TestThemeRepository(t *testing.T) {
 
 		t.Logf("%s: %s", ths[0].ID, ths[0].Name)
 
-		// delete the fist time.
+		// Delete the fist time.
 		err = repo.Delete(context.Background(), ths[0].ID)
 		assert.NoError(t, err)
 
-		// do not delete the second time.
+		// Do not delete the second time.
 		err = repo.Delete(context.Background(), ths[0].ID)
 		assert.Error(t, err)
 		assert.True(t, errors.Is(err, ErrNotFound))
+	})
+
+	t.Run("creates themes in batch", func(t *testing.T) {
+		ths := []*themes.Theme{ // Ordened by name.
+			{Name: "Theme 1"},
+			{Name: "Theme 2"},
+			{Name: "Theme 3"},
+			{Name: "Theme 4"},
+		}
+
+		err := repo.SaveThemes(context.Background(), ths...)
+		assert.NoError(t, err)
+
+		ths2, err := repo.List(context.Background(), nil)
+		assert.NoError(t, err)
+
+		assert.Equal(t, len(ths), len(ths2))
+		for i := 0; i < len(ths); i++ {
+			t.Log(ths[i].Name)
+			assert.Equal(t, ths[i].ID, ths2[i].ID)
+			assert.Equal(t, ths[i].Name, ths2[i].Name)
+		}
 	})
 }

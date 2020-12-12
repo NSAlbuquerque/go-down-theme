@@ -5,7 +5,7 @@ import "context"
 // Repository of themes.
 type Repository interface {
 	Save(context.Context, *Theme) error
-	SaveGallery(context.Context, Gallery) error
+	SaveThemes(context.Context, ...*Theme) error
 	Get(context.Context, string) (*Theme, error)
 	List(context.Context, *ListFilter) (Gallery, error)
 	Delete(context.Context, string) error

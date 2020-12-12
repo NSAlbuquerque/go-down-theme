@@ -95,12 +95,12 @@ func (r *ThemeRepository) Save(ctx context.Context, t *themes.Theme) error {
 	return nil
 }
 
-// SaveGallery stores multiple themes at once.
-func (r *ThemeRepository) SaveGallery(ctx context.Context, gallery themes.Gallery) error {
-	return r.save(ctx, "Repository.SaveGallery", gallery...)
+// SaveThemes stores multiple themes at once.
+func (r *ThemeRepository) SaveThemes(ctx context.Context, ths ...*themes.Theme) error {
+	return r.save(ctx, "Repository.SaveThemes", ths...)
 }
 
-func (r *ThemeRepository) save(ctx context.Context, op string, ths ...themes.Theme) error {
+func (r *ThemeRepository) save(ctx context.Context, op string, ths ...*themes.Theme) error {
 	log := r.operation(op)
 
 	var (
@@ -122,7 +122,7 @@ func (r *ThemeRepository) save(ctx context.Context, op string, ths ...themes.The
 			license,
 			provider,
 			last_update)
-		VAUES `)
+		VALUES `)
 
 	qtd := len(ths)
 	for i := 0; i < qtd; i++ {
@@ -130,9 +130,10 @@ func (r *ThemeRepository) save(ctx context.Context, op string, ths ...themes.The
 		if i < qtd-1 {
 			sb.WriteString(",\n")
 		}
+		ths[i].ID = uuid.New().String()
 		args = append(
 			args,
-			uuid.New().String(),
+			ths[i].ID,
 			ths[i].Name,
 			ths[i].Author,
 			ths[i].Description,
@@ -156,21 +157,31 @@ func (r *ThemeRepository) save(ctx context.Context, op string, ths ...themes.The
 	result, err := tx.ExecContext(ctx, sb.String(), args...)
 	if err != nil {
 		log.WithError(err).Error("error on execute insert command")
+		clearIDs(ths...)
 		tx.Rollback()
 		return err
 	}
 	if inserts, err := result.RowsAffected(); err != nil || inserts != int64(qtd) {
 		log.Error("missing insert theme")
+		clearIDs(ths...)
 		tx.Rollback()
+		return err
 	}
 
 	err = tx.Commit()
 	if err != nil {
 		log.WithError(err).Error("error on commit database inserts")
+		clearIDs(ths...)
 		return err
 	}
 
-	return fmt.Errorf("not implemented")
+	return nil
+}
+
+func clearIDs(ths ...*themes.Theme) {
+	for i := 0; i < len(ths); i++ {
+		ths[i].ID = ""
+	}
 }
 
 // Get returns a theme by id.
