@@ -18,7 +18,7 @@ import (
 
 	"github.com/albuquerq/go-down-theme/pkg/common"
 	"github.com/albuquerq/go-down-theme/pkg/domain/themes"
-	"github.com/albuquerq/go-down-theme/pkg/providers/github"
+	"github.com/albuquerq/go-down-theme/pkg/gateways/providers/github"
 )
 
 const (
