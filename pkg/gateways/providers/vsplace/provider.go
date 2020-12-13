@@ -14,21 +14,21 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/albuquerq/go-down-theme/pkg/common"
+	"github.com/albuquerq/go-down-theme/pkg/domain/providers"
 	"github.com/albuquerq/go-down-theme/pkg/domain/themes"
+	"github.com/albuquerq/go-down-theme/pkg/domain/vos"
 	"github.com/sirupsen/logrus"
 )
 
 const (
 	// Name of provider.
-	Name themes.ProviderName = "Visual Studio Marketplace"
+	Name vos.ProviderName = "Visual Studio Marketplace"
 
 	extensionsEndpoint = "https://marketplace.visualstudio.com/_apis/public/gallery/extensionquery"
 
 	pgSize                  = 100
 	defaultRequestsInterval = time.Second / 5
 )
-
-var _ themes.Provider = &Provider{}
 
 // Provider represents a theme provider
 // to the Visual Studio Marketplace.
@@ -37,6 +37,8 @@ type Provider struct {
 	ticker *time.Ticker
 	logger *logrus.Entry
 }
+
+var _ providers.Provider = &Provider{}
 
 // Option applies option to the provider.
 type Option func(*Provider)

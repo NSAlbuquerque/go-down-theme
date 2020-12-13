@@ -9,13 +9,15 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/albuquerq/go-down-theme/pkg/common"
+	"github.com/albuquerq/go-down-theme/pkg/domain/providers"
 	"github.com/albuquerq/go-down-theme/pkg/domain/themes"
+	"github.com/albuquerq/go-down-theme/pkg/domain/vos"
 	"github.com/albuquerq/go-down-theme/pkg/gateways/providers/github"
 )
 
 const (
 	// Name of provider.
-	Name themes.ProviderName = "tmTheme-editor"
+	Name vos.ProviderName = "tmTheme-editor"
 
 	sourceURL = "https://tmtheme-editor.herokuapp.com/gallery.json"
 )
@@ -26,7 +28,7 @@ type Provider struct {
 	logger *logrus.Logger
 }
 
-var _ themes.Provider = &Provider{}
+var _ providers.Provider = &Provider{}
 
 // NewProvider returns a theme provider for tmTheme-editor.
 func NewProvider(opts ...Option) *Provider {

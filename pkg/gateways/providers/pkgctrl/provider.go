@@ -17,13 +17,15 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/albuquerq/go-down-theme/pkg/common"
+	"github.com/albuquerq/go-down-theme/pkg/domain/providers"
 	"github.com/albuquerq/go-down-theme/pkg/domain/themes"
+	"github.com/albuquerq/go-down-theme/pkg/domain/vos"
 	"github.com/albuquerq/go-down-theme/pkg/gateways/providers/github"
 )
 
 const (
 	// Name of provider.
-	Name themes.ProviderName = "Package Control"
+	Name vos.ProviderName = "Package Control"
 
 	labelEndpoint   = "https://packagecontrol.io/browse/labels/"
 	packageEndpoint = "https://packagecontrol.io/packages/"
@@ -35,7 +37,7 @@ var DefaultLabels = []string{"theme", "color scheme", "monokai"}
 // defaultRequestsInterval interval between HTTP requests.
 const defaultRequestsInterval = time.Second / 25
 
-// Provider para Sublime Package Control.
+// Provider for Sublime Package Control.
 type Provider struct {
 	labels []string
 	cli    *http.Client
@@ -43,7 +45,7 @@ type Provider struct {
 	logger *logrus.Logger
 }
 
-var _ themes.Provider = &Provider{}
+var _ providers.Provider = &Provider{}
 
 // NewProvider returns a provider for the Package Control.
 // Search only in the informed labels.

@@ -3,7 +3,7 @@ package colorsubl
 import (
 	"testing"
 
-	"github.com/albuquerq/go-down-theme/pkg/domain/themes"
+	"github.com/albuquerq/go-down-theme/pkg/domain/providers"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -11,7 +11,7 @@ import (
 func Test_ColorSublProvider_GetGallery(t *testing.T) {
 	tests := []struct {
 		name     string
-		provider themes.Provider
+		provider providers.Provider
 	}{
 		// TODO: Add test cases.
 		{

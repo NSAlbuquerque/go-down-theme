@@ -8,25 +8,27 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/albuquerq/go-down-theme/pkg/common"
+	"github.com/albuquerq/go-down-theme/pkg/domain/providers"
 	"github.com/albuquerq/go-down-theme/pkg/domain/themes"
+	"github.com/albuquerq/go-down-theme/pkg/domain/vos"
 	"github.com/albuquerq/go-down-theme/pkg/gateways/providers/github"
 )
 
 const (
 	// Name of provider.
-	Name themes.ProviderName = "Color Sublime"
+	Name vos.ProviderName = "Color Sublime"
 
 	galleryURL    = "https://raw.githubusercontent.com/Colorsublime/Colorsublime-Themes/master/themes.json"
 	themeFilePath = "https://raw.githubusercontent.com/Colorsublime/Colorsublime-Themes/master/themes/"
 )
-
-var _ themes.Provider = &Provider{}
 
 // Provider for color sublime project.
 type Provider struct {
 	cli    *http.Client
 	logger *logrus.Logger
 }
+
+var _ providers.Provider = &Provider{}
 
 // NewProvider returns a ColorSublime theme provider.
 func NewProvider(opts ...Option) *Provider {

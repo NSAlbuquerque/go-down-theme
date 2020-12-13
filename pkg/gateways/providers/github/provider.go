@@ -16,17 +16,20 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/albuquerq/go-down-theme/pkg/common"
+	"github.com/albuquerq/go-down-theme/pkg/domain/providers"
 	"github.com/albuquerq/go-down-theme/pkg/domain/themes"
+	"github.com/albuquerq/go-down-theme/pkg/domain/vos"
 )
 
 const (
 	// Name of provider.
-	Name themes.ProviderName = "Github"
+	Name vos.ProviderName = "Github"
 
 	searchEndpointFmt       = "https://api.github.com/search/code?"
 	defaultRequestsInterval = time.Minute / 10 // Intervalo entre as requisições.
 )
 
+// Provider for github repository.
 type Provider struct {
 	token  string
 	repo   *Repo
@@ -34,6 +37,8 @@ type Provider struct {
 	logger *logrus.Logger
 	ticker *time.Ticker
 }
+
+var _ providers.Provider = &Provider{}
 
 // NewProvider returns a github theme provider.
 func NewProvider(repo *Repo, opts ...Option) *Provider {
