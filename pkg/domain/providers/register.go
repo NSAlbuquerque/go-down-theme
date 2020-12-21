@@ -27,3 +27,13 @@ func Get(name vos.ProviderName) Provider {
 	log.Fatalf("%s provider not registred", name)
 	return nil
 }
+
+// List returns registered providers.
+func List() []Provider {
+	var provids []Provider
+
+	for _, p := range providers {
+		provids = append(provids, p)
+	}
+	return provids
+}
