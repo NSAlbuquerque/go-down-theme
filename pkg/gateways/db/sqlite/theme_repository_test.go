@@ -17,6 +17,16 @@ const (
 	testMigrationsPath = "file://migrations"
 )
 
+func dropTables(ctx context.Context, db *sql.DB) error {
+	_, err := db.ExecContext(ctx, "DROP TABLE IF EXISTS themes; DROP TABLE IF EXISTS schema_migrations;")
+	return err
+}
+
+func truncateTables(ctx context.Context, db *sql.DB) error {
+	_, err := db.ExecContext(ctx, "DELETE FROM themes; DELETE FROM schema_migrations;")
+	return err
+}
+
 func TestThemeRepository(t *testing.T) {
 
 	log := logrus.New()
@@ -25,7 +35,7 @@ func TestThemeRepository(t *testing.T) {
 	require.NoError(t, err)
 
 	// removes tables
-	_, err = db.ExecContext(context.Background(), "drop table if exists themes; drop table if exists schema_migrations;")
+	err = dropTables(context.Background(), db)
 	require.NoError(t, err)
 
 	err = Migrate(testMigrationsPath, db, log)
@@ -99,5 +109,32 @@ func TestThemeRepository(t *testing.T) {
 			assert.Equal(t, ths[i].ID, ths2[i].ID)
 			assert.Equal(t, ths[i].Name, ths2[i].Name)
 		}
+	})
+
+	t.Run("updates a theme data", func(t *testing.T) {
+		truncateTables(context.Background(), db)
+		defer truncateTables(context.Background(), db)
+
+		th := themes.Theme{
+			Name:        "first theme",
+			Description: "first test theme",
+			Author:      "author",
+			URL:         "http://github.com/albuquerq/teste",
+		}
+
+		err := repo.Save(context.Background(), &th)
+		assert.NoError(t, err)
+
+		th.Name = "second theme" // Sets new name.
+
+		err = repo.Update(context.Background(), &th)
+		assert.NoError(t, err)
+
+		th2, err := repo.Get(context.Background(), th.ID)
+		assert.NoError(t, err)
+		assert.Equal(t, th.Name, th2.Name)
+		assert.Equal(t, th.Description, th2.Description)
+		assert.Equal(t, th.Author, th2.Author)
+
 	})
 }

@@ -63,7 +63,7 @@ func (r *ThemeRepository) Save(ctx context.Context, t *themes.Theme) error {
 			version,
 			license,
 			provider,
-			updated_at
+			last_update
 		) VALUES (
 			?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
 		)`
@@ -91,6 +91,55 @@ func (r *ThemeRepository) Save(ctx context.Context, t *themes.Theme) error {
 	}
 
 	t.ID = id
+
+	return nil
+}
+
+// Update a theme data.
+func (r *ThemeRepository) Update(ctx context.Context, t *themes.Theme) error {
+	log := r.operation("ThemeRepository.Update")
+	const cmd = `
+		UPDATE themes SET
+			name = ?,
+			author = ?,
+			description = ?,
+			url = ?,
+			light = ?,
+			project_repo = ?,
+			readme = ?,
+			version = ?,
+			license = ?,
+			provider = ?,
+			last_update = ?,
+			updated_at = strftime('%s','now')
+		WHERE id = ?
+		`
+
+	result, err := r.db.ExecContext(
+		ctx,
+		cmd,
+		t.Name,
+		t.Author,
+		t.Description,
+		t.URL,
+		t.Light,
+		t.ProjectRepo,
+		t.Readme,
+		t.Version,
+		t.License,
+		string(t.Provider),
+		t.LastUpdate,
+		t.ID,
+	)
+	if err != nil {
+		log.WithError(err).WithField("theme_id", t.ID).Printf("error on execute update command")
+		return err
+	}
+
+	if n, err := result.RowsAffected(); err != nil || n < 1 {
+		log.WithError(err).WithField("theme_id", t.ID).Println("no rows affected")
+		return err
+	}
 
 	return nil
 }

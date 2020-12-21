@@ -9,6 +9,7 @@ type Repository interface {
 	Get(context.Context, string) (*Theme, error)
 	List(context.Context, *ListFilter) (Gallery, error)
 	Delete(context.Context, string) error
+	Update(context.Context, *Theme) error
 }
 
 // ListFilter filter querys.
